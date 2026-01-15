@@ -8,19 +8,36 @@
 import SwiftUI
 
 struct ContentView: View {
+    @State private var trips: [Trip] = []
+
     var body: some View {
-        VStack {
-            Image(systemName: "globe")
-                .imageScale(.large)
-                .foregroundStyle(.tint)
-            Text("Welcome to Park Planner!")
-                .font(.title)
-                .fontWeight(.bold)
+        NavigationStack {
+            VStack(spacing: 24) {
+                Text("Welcome to Park Planner!")
+                    .font(.largeTitle)
+
+                NavigationLink {
+                    CreateTripView(trips: $trips)
+                } label: {
+                    Text("Add Trip")
+                        .font(.headline)
+                        .frame(maxWidth: .infinity)
+                        .padding()
+                        .background(Color.blue)
+                        .foregroundColor(.white)
+                        .cornerRadius(12)
+                }
+
+                Spacer()
+            }
+            .padding()
         }
-        .padding()
     }
 }
 
+
+
 #Preview {
+
     ContentView()
 }

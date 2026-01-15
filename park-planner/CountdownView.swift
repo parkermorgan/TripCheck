@@ -8,8 +8,13 @@
 import SwiftUI
 
 struct CountdownView: View {
+    
+    @State private var selectedDate = Date()
+    
     var body: some View {
-        Text(/*@START_MENU_TOKEN@*/"Hello, World!"/*@END_MENU_TOKEN@*/)
+        DatePicker("Start Date", selection: $selectedDate, displayedComponents: [.date])
+            .padding()
+        
     }
 }
 

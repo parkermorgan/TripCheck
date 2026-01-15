@@ -11,7 +11,7 @@ import SwiftUI
 struct park_plannerApp: App {
     var body: some Scene {
         WindowGroup {
-            ContentView()
+            MainView()
         }
     }
 }
