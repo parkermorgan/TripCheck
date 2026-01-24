@@ -1,7 +1,7 @@
 {
   "images" : [
     {
-      "filename" : "park-planner-iOS-Default-1024x1024@1x.png",
+      "filename" : "TripCheck - V1-iOS-Default-1024x1024@1x.png",
       "idiom" : "universal",
       "platform" : "ios",
       "size" : "1024x1024"
@@ -13,7 +13,7 @@
           "value" : "dark"
         }
       ],
-      "filename" : "park-planner-iOS-Dark-1024x1024@1x.png",
+      "filename" : "TripCheck - V1-iOS-Dark-1024x1024@1x.png",
       "idiom" : "universal",
       "platform" : "ios",
       "size" : "1024x1024"
@@ -25,7 +25,7 @@
           "value" : "tinted"
         }
       ],
-      "filename" : "park-planner-iOS-TintedDark-1024x1024@1x.png",
+      "filename" : "TripCheck - V1-iOS-ClearLight-1024x1024@1x.png",
       "idiom" : "universal",
       "platform" : "ios",
       "size" : "1024x1024"
