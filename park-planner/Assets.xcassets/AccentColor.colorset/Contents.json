@@ -16,6 +16,19 @@
       "appearances" : [
         {
           "appearance" : "luminosity",
+          "value" : "light"
+        }
+      ],
+      "color" : {
+        "platform" : "universal",
+        "reference" : "systemBlueColor"
+      },
+      "idiom" : "universal"
+    },
+    {
+      "appearances" : [
+        {
+          "appearance" : "luminosity",
           "value" : "dark"
         }
       ],
