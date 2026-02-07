@@ -8,11 +8,22 @@
 import SwiftUI
 
 struct WeatherView: View {
+    @Binding var trips: [Trip]
+
     var body: some View {
-        Text("Weather Info: ")
+        List(trips) { trip in
+            VStack(alignment: .leading) {
+                Text(trip.name)
+                    .font(.headline)
+                Text("Location: \(trip.locationName)")
+                    .font(.subheadline)
+                    .foregroundColor(.secondary)
+            }
+            .padding(.vertical, 4)
+        }
     }
 }
 
 #Preview {
-    WeatherView()
+    WeatherView(trips: .constant([]))
 }

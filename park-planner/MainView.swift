@@ -8,29 +8,25 @@
 import SwiftUI
 
 struct MainView: View {
+    @State private var trips: [Trip] = []
+    @State private var checklistItems: [CheckListItem] = []
+
     var body: some View {
         TabView {
-            ContentView()
-                .tabItem {
-                    Label("Home", systemImage: "house")
-                }
-            TripInfoView()
-                .tabItem {
-                    Label("Trip Info", systemImage: "info.circle")
-                }
+            ContentView(trips: $trips)
+                .tabItem { Label("Home", systemImage: "house") }
+
+            TripInfoView(trips: $trips)
+                .tabItem { Label("Trip Info", systemImage: "info.circle") }
+
             CountdownView()
-                .tabItem {
-                    Label("Countdown", systemImage: "calendar")
-                }
-            WeatherView()
-                .tabItem {
-                    Label("Weather", systemImage: "sun.max")
-                }
-            ChecklistView()
-                .tabItem {
-                    Label("Checklist", systemImage: "checkmark.circle")
-                }
-            
+                .tabItem { Label("Countdown", systemImage: "calendar") }
+
+            WeatherView(trips: $trips)
+                .tabItem { Label("Weather", systemImage: "sun.max") }
+
+            TripChecklistTab(trips: $trips)
+                .tabItem { Label("Checklist", systemImage: "checkmark.circle") }
         }
     }
 }

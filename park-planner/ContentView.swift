@@ -8,12 +8,12 @@
 import SwiftUI
 
 struct ContentView: View {
-    @State private var trips: [Trip] = []
+    @Binding var trips: [Trip]
 
     var body: some View {
         NavigationStack {
             VStack(spacing: 24) {
-                Text("Welcome to Park Planner!")
+                Text("Welcome to TripCheck!")
                     .font(.largeTitle)
 
                 NavigationLink {
@@ -38,6 +38,5 @@ struct ContentView: View {
 
 
 #Preview {
-
-    ContentView()
+    ContentView(trips: .constant([]))
 }
