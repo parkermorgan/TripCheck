@@ -15,6 +15,7 @@ private let dateFormatter: DateFormatter = {
 
 struct TripInfoView: View {
     @Binding var trips: [Trip]
+    @Binding var selectedTrip: Trip?
 
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
@@ -45,6 +46,12 @@ struct TripInfoView: View {
                         .foregroundColor(.secondary)
 
                         Button("Delete Trip") {
+                            let tripToDelete = trips[index]
+
+                            if selectedTrip?.id == tripToDelete.id {
+                                selectedTrip = nil
+                            }
+
                             trips.remove(at: index)
                         }
                         .foregroundColor(.red)
@@ -60,5 +67,8 @@ struct TripInfoView: View {
 }
 
 #Preview {
-    TripInfoView(trips: .constant([]))
+    TripInfoView(
+        trips: .constant([]),
+        selectedTrip: .constant(nil)
+    )
 }

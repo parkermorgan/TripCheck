@@ -9,6 +9,7 @@ import SwiftUI
 
 struct ContentView: View {
     @Binding var trips: [Trip]
+    @Binding var selectedTrip: Trip?
 
     var body: some View {
         NavigationStack {
@@ -28,7 +29,13 @@ struct ContentView: View {
                         .cornerRadius(12)
                 }
 
-                Spacer()
+                List(trips) { trip in
+                    Button {
+                        selectedTrip = trip
+                    } label: {
+                        Text(trip.name)
+                    }
+                }
             }
             .padding()
         }
@@ -38,5 +45,8 @@ struct ContentView: View {
 
 
 #Preview {
-    ContentView(trips: .constant([]))
+    ContentView(
+        trips: .constant([]),
+        selectedTrip: .constant(nil)
+    )
 }

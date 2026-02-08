@@ -9,18 +9,26 @@ import SwiftUI
 
 struct MainView: View {
     @State private var trips: [Trip] = []
+    @State private var selectedTrip: Trip?
     @State private var checklistItems: [CheckListItem] = []
 
     var body: some View {
         TabView {
-            ContentView(trips: $trips)
+            ContentView(trips: $trips, selectedTrip: $selectedTrip)
                 .tabItem { Label("Home", systemImage: "house") }
 
-            TripInfoView(trips: $trips)
+            TripInfoView(trips: $trips, selectedTrip: $selectedTrip)
                 .tabItem { Label("Trip Info", systemImage: "info.circle") }
 
-            CountdownView()
-                .tabItem { Label("Countdown", systemImage: "calendar") }
+            if let trip = selectedTrip {
+                CountdownView(trip: trip)
+                    .tabItem { Label("Countdown", systemImage: "calendar") }
+            } else {
+                Text("Select a trip to see the countdown")
+                    .foregroundColor(.secondary)
+                    .padding()
+                    .tabItem { Label("Countdown", systemImage: "calendar") }
+            }
 
             WeatherView(trips: $trips)
                 .tabItem { Label("Weather", systemImage: "sun.max") }
