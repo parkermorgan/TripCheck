@@ -19,29 +19,38 @@ func daysUntil(_ date: Date) -> Int {
 
 struct CountdownView: View {
     let trip: Trip
-
+    
     var daysRemaining: Int {
         daysUntil(trip.startDate)
     }
-
+    
     var body: some View {
-        VStack(spacing: 12) {
-            Text("Countdown to your trip")
-                .font(.headline)
-
-            if daysRemaining > 0 {
-                Text("\(daysRemaining) days to go 🎒")
-                    .font(.largeTitle)
-                    .bold()
-            } else if daysRemaining == 0 {
-                Text("Trip starts today! ✈️")
-                    .font(.largeTitle)
-            } else {
-                Text("Trip already started")
-                    .foregroundColor(.secondary)
+        ZStack {
+            LinearGradient(
+                colors: [Color.blue.opacity(0.3), Color.purple.opacity(0.3)],
+                startPoint: .topLeading,
+                endPoint: .bottomTrailing
+            )
+            .ignoresSafeArea()
+            VStack(spacing: 12) {
+                Text("Countdown to your trip")
+                    .font(.headline)
+                
+                if daysRemaining > 0 {
+                    Text("\(daysRemaining) days to go 🎒")
+                        .font(.largeTitle)
+                        .bold()
+                } else if daysRemaining == 0 {
+                    Text("Trip starts today! ✈️")
+                        .font(.largeTitle)
+                } else {
+                    Text("Trip already started")
+                        .foregroundColor(.secondary)
+                }
             }
+            .padding()
         }
-        .padding()
+        
     }
 }
 

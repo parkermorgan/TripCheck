@@ -24,10 +24,21 @@ struct MainView: View {
                 CountdownView(trip: trip)
                     .tabItem { Label("Countdown", systemImage: "calendar") }
             } else {
-                Text("Select a trip to see the countdown")
-                    .foregroundColor(.secondary)
-                    .padding()
-                    .tabItem { Label("Countdown", systemImage: "calendar") }
+                ZStack {
+                    LinearGradient(
+                        colors: [Color.blue.opacity(0.3), Color.purple.opacity(0.3)],
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
+                    )
+                    .ignoresSafeArea()
+                    VStack {
+                        Text("Select a trip to see the countdown")
+                            .foregroundColor(.secondary)
+                            .italic()
+                            .padding(.top, 8)
+                    }
+                }
+                .tabItem { Label("Countdown", systemImage: "calendar") }
             }
 
             WeatherView(trips: $trips)
