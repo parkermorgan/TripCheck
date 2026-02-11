@@ -8,7 +8,7 @@ struct CheckListItem: Identifiable {
     var isCompleted: Bool
 }
 
-struct Trip: Identifiable {
+struct Trip: Identifiable, Equatable {
     let id = UUID()
     let name: String
     let locationName: String
@@ -16,6 +16,10 @@ struct Trip: Identifiable {
     let startDate: Date
     let endDate: Date
     var checklist: [CheckListItem]
+
+    static func == (lhs: Trip, rhs: Trip) -> Bool {
+        lhs.id == rhs.id
+    }
 }
 
 struct CreateTripView: View {
