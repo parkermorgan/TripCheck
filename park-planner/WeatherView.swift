@@ -13,6 +13,8 @@ struct WeatherView: View {
     @State private var selectedTrip: Trip?
     @State private var temperatureText: String = "--"
     @State private var conditionText: String = ""
+    @State private var weatherIconName: String = "questionmark.circle"
+    @State private var dailyForecast: [(date: String, max: String, min: String, weatherCode: Int)] = []
 
     var body: some View {
         ZStack {
@@ -60,10 +62,9 @@ struct WeatherView: View {
                             .padding(.horizontal)
                             .onChange(of: selectedTrip) { newTrip in
                                 guard let trip = newTrip else { return }
-                                // Reset displayed weather
                                 temperatureText = "--"
                                 conditionText = ""
-                                // Fetch new weather
+                                dailyForecast = []
                                 Task {
                                     await loadWeather(for: trip)
                                 }
@@ -77,11 +78,39 @@ struct WeatherView: View {
                                 .font(.title3)
                                 .fontWeight(.semibold)
 
+                            Image(systemName: weatherIconName)
+                                .font(.system(size: 40))
+                                .foregroundColor(.primary)
+
                             Text(temperatureText)
                                 .font(.system(size: 48, weight: .bold))
 
                             Text(conditionText)
                                 .foregroundColor(.secondary)
+                            
+                            Divider()
+                                .padding(.vertical, 8)
+
+                            VStack(alignment: .leading, spacing: 6) {
+                                Text("7-Day Forecast")
+                                    .font(.headline)
+
+                                ForEach(dailyForecast, id: \.date) { day in
+                                    HStack {
+                                        Text(day.date)
+                                            .font(.caption)
+
+                                        Spacer()
+
+                                        Image(systemName: weatherCodeToIcon(day.weatherCode))
+                                            .font(.caption)
+
+                                        Text("H: \(day.max)  L: \(day.min)")
+                                            .font(.caption)
+                                    }
+                                }
+                            }
+                            .padding(.top, 8)
                         }
                         .padding(.top, 12)
                     } else {
@@ -98,8 +127,7 @@ struct WeatherView: View {
     }
 
     private func loadWeather(for trip: Trip) async {
-        // Build URL with explicit temperature unit and timezone
-        let urlString = "https://api.open-meteo.com/v1/forecast?latitude=\(trip.coordinate.latitude)&longitude=\(trip.coordinate.longitude)&current_weather=true&temperature_unit=fahrenheit&timezone=auto"
+        let urlString = "https://api.open-meteo.com/v1/forecast?latitude=\(trip.coordinate.latitude)&longitude=\(trip.coordinate.longitude)&current_weather=true&daily=temperature_2m_max,temperature_2m_min,weathercode&forecast_days=7&temperature_unit=fahrenheit&timezone=auto"
         guard let url = URL(string: urlString) else {
             DispatchQueue.main.async {
                 self.temperatureText = "--"
@@ -111,7 +139,6 @@ struct WeatherView: View {
         do {
             let (data, _) = try await URLSession.shared.data(from: url)
             
-            // Log raw JSON for debugging
             if let jsonString = String(data: data, encoding: .utf8) {
                 print("Open-Meteo raw JSON for \(trip.name):", jsonString)
             }
@@ -126,6 +153,28 @@ struct WeatherView: View {
                 DispatchQueue.main.async {
                     self.temperatureText = "\(Int(temp))°"
                     self.conditionText = condition
+                    self.weatherIconName = weatherCodeToIcon(weatherCode)
+                }
+                
+                if let daily = json["daily"] as? [String: Any],
+                   let dates = daily["time"] as? [String],
+                   let maxTemps = daily["temperature_2m_max"] as? [Double],
+                   let minTemps = daily["temperature_2m_min"] as? [Double],
+                   let weatherCodes = daily["weathercode"] as? [Int] {
+
+                    var forecastData: [(String, String, String, Int)] = []
+
+                    for i in 0..<min(7, dates.count) {
+                        let max = "\(Int(maxTemps[i]))°"
+                        let min = "\(Int(minTemps[i]))°"
+                        let code = weatherCodes[i]
+                        let formattedDate = formatDate(dates[i])
+                        forecastData.append((formattedDate, max, min, code))
+                    }
+
+                    DispatchQueue.main.async {
+                        self.dailyForecast = forecastData
+                    }
                 }
             } else {
                 DispatchQueue.main.async {
@@ -142,7 +191,6 @@ struct WeatherView: View {
         }
     }
 
-    // Helper to convert Open-Meteo weather code to description
     private func weatherCodeToDescription(_ code: Int) -> String {
         switch code {
         case 0: return "Clear sky"
@@ -157,4 +205,54 @@ struct WeatherView: View {
         default: return "Unknown"
         }
     }
+
+    private func weatherCodeToIcon(_ code: Int) -> String {
+        switch code {
+        case 0: return "sun.max"
+        case 1, 2, 3: return "cloud.sun"
+        case 45, 48: return "cloud.fog"
+        case 51, 53, 55: return "cloud.drizzle"
+        case 61, 63, 65: return "cloud.rain"
+        case 66, 67: return "cloud.sleet"
+        case 71, 73, 75: return "cloud.snow"
+        case 80, 81, 82: return "cloud.heavyrain"
+        case 95: return "cloud.bolt.rain"
+        default: return "questionmark.circle"
+        }
+    }
+
+    private func formatDate(_ dateString: String) -> String {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "yyyy-MM-dd"
+
+        if let date = formatter.date(from: dateString) {
+            formatter.dateFormat = "EEE"
+            return formatter.string(from: date)
+        }
+
+        return dateString
+    }
+}
+
+#Preview {
+    WeatherView(
+        trips: .constant([
+            Trip(
+                name: "Hawaii Trip",
+                locationName: "Honolulu",
+                coordinate: CLLocationCoordinate2D(latitude: 21.3069, longitude: -157.8583),
+                startDate: Date(),
+                endDate: Date().addingTimeInterval(86400 * 5),
+                checklist: []
+            ),
+            Trip(
+                name: "Seattle Visit",
+                locationName: "Seattle",
+                coordinate: CLLocationCoordinate2D(latitude: 47.6062, longitude: -122.3321),
+                startDate: Date(),
+                endDate: Date().addingTimeInterval(86400 * 3),
+                checklist: []
+            )
+        ])
+    )
 }
