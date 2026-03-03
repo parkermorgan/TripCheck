@@ -10,11 +10,16 @@ import CoreLocation
 
 struct WeatherView: View {
     @Binding var trips: [Trip]
-    @State private var selectedTrip: Trip?
+    @State private var selectedTripID: UUID?
     @State private var temperatureText: String = "--"
     @State private var conditionText: String = ""
     @State private var weatherIconName: String = "questionmark.circle"
     @State private var dailyForecast: [(date: String, max: String, min: String, weatherCode: Int)] = []
+
+    // Always derived live from the binding — never stale
+    var selectedTrip: Trip? {
+        trips.first(where: { $0.id == selectedTripID })
+    }
 
     var body: some View {
         ZStack {
@@ -48,26 +53,25 @@ struct WeatherView: View {
                                 .frame(width: 180)
                                 .background(
                                     RoundedRectangle(cornerRadius: 12)
-                                        .fill(selectedTrip?.id == trip.id
+                                        .fill(selectedTripID == trip.id
                                               ? Color.blue.opacity(0.35)
                                               : Color.white.opacity(0.25))
                                 )
                                 .onTapGesture {
-                                    selectedTrip = trip
+                                    selectedTripID = trip.id
                                 }
                             }
                         }
-                        
+                    }
+                    .padding(.horizontal)
+                    .onChange(of: selectedTripID) { _ in
+                        guard let trip = selectedTrip else { return }
+                        temperatureText = "--"
+                        conditionText = ""
+                        dailyForecast = []
+                        Task {
+                            await loadWeather(for: trip)
                         }
-                            .padding(.horizontal)
-                            .onChange(of: selectedTrip) { newTrip in
-                                guard let trip = newTrip else { return }
-                                temperatureText = "--"
-                                conditionText = ""
-                                dailyForecast = []
-                                Task {
-                                    await loadWeather(for: trip)
-                                }
                     }
 
                     Divider()
@@ -87,7 +91,7 @@ struct WeatherView: View {
 
                             Text(conditionText)
                                 .foregroundColor(.secondary)
-                            
+
                             Divider()
                                 .padding(.vertical, 8)
 
@@ -122,7 +126,15 @@ struct WeatherView: View {
             .padding()
         }
         .onAppear {
-            selectedTrip = trips.first
+            selectedTripID = trips.first?.id
+        }
+        .onChange(of: trips) { updatedTrips in
+
+            if let updated = updatedTrips.first(where: { $0.id == selectedTripID }) {
+                Task {
+                    await loadWeather(for: updated)
+                }
+            }
         }
     }
 
@@ -138,7 +150,7 @@ struct WeatherView: View {
 
         do {
             let (data, _) = try await URLSession.shared.data(from: url)
-            
+
             if let jsonString = String(data: data, encoding: .utf8) {
                 print("Open-Meteo raw JSON for \(trip.name):", jsonString)
             }
@@ -155,7 +167,7 @@ struct WeatherView: View {
                     self.conditionText = condition
                     self.weatherIconName = weatherCodeToIcon(weatherCode)
                 }
-                
+
                 if let daily = json["daily"] as? [String: Any],
                    let dates = daily["time"] as? [String],
                    let maxTemps = daily["temperature_2m_max"] as? [Double],

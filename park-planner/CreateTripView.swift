@@ -2,35 +2,21 @@ import SwiftUI
 import MapKit
 import CoreLocation
 
-struct CheckListItem: Identifiable {
-    let id = UUID()
-    var title: String
-    var isCompleted: Bool
-}
-
-struct Trip: Identifiable, Equatable {
-    let id = UUID()
-    let name: String
-    let locationName: String
-    let coordinate: CLLocationCoordinate2D
-    let startDate: Date
-    let endDate: Date
-    var checklist: [CheckListItem]
-
-    static func == (lhs: Trip, rhs: Trip) -> Bool {
-        lhs.id == rhs.id
-    }
-}
-
 struct CreateTripView: View {
     @State private var selectedLocation: MKMapItem?
     @State private var showLocationPicker = false
     @Binding var trips: [Trip]
+    @Binding var selectedTrip: UUID?
     @State private var tripName = ""
     @State private var startDate = Date()
     @State private var endDate = Date()
     @State private var checklistItems: [CheckListItem] = []
+    @State private var alertMessage = ""
+    @State private var showAlert = false
+    @State private var isSuccess = false
     @Environment(\.dismiss) var dismiss
+    
+    var existingTrip: Trip? = nil
 
     var body: some View {
         ZStack {
@@ -51,7 +37,7 @@ struct CreateTripView: View {
                             HStack {
                                 Text("Location")
                                 Spacer()
-                                Text(selectedLocation?.name ?? "Select")
+                                Text(selectedLocation?.name ?? existingTrip?.locationName ?? "Select")
                                     .foregroundColor(.secondary)
                             }
                         }
@@ -62,35 +48,84 @@ struct CreateTripView: View {
 
                     Section("Dates") {
                         DatePicker("Start Date", selection: $startDate, displayedComponents: .date)
-                        DatePicker("End Date", selection: $endDate, displayedComponents: .date)
+                            .onChange(of: startDate) { newValue in
+                                if endDate < newValue {
+                                    endDate = newValue
+                                }
+                            }
+                        DatePicker("End Date", selection: $endDate, in: startDate..., displayedComponents: .date)
                     }
 
-                    
-                    .listRowBackground(Color(UIColor.systemBackground))
+                    Button(existingTrip == nil ? "Save Trip" : "Update Trip") {
+                        let locationName = selectedLocation?.name ?? existingTrip?.locationName ?? ""
+                        let coordinate = selectedLocation?.placemark.coordinate ?? existingTrip?.coordinate
 
-                    Button("Save Trip") {
-                        guard let location = selectedLocation else { return }
-                        let newTrip = Trip(
-                            name: tripName,
-                            locationName: location.name ?? "Unknown",
-                            coordinate: location.location.coordinate,
-                            startDate: startDate,
-                            endDate: endDate,
-                            checklist: checklistItems
-                        )
-                        trips.append(newTrip)
-                        dismiss()
+                        guard !tripName.isEmpty, !locationName.isEmpty, let coordinate = coordinate else {
+                            alertMessage = "Please fill in all fields."
+                            isSuccess = false
+                            showAlert = true
+                            return
+                        }
+
+                        if let existing = existingTrip,
+                           let index = trips.firstIndex(where: { $0.id == existing.id }) {
+                            var updatedTrip = Trip(
+                                name: tripName,
+                                locationName: locationName,
+                                coordinate: coordinate,
+                                startDate: startDate,
+                                endDate: endDate,
+                                checklist: checklistItems
+                            )
+                            updatedTrip.id = existing.id
+                            trips[index] = updatedTrip
+
+                            if selectedTrip == existing.id {
+                                selectedTrip = nil
+                                selectedTrip = existing.id
+                            }
+                        } else {
+                            let newTrip = Trip(
+                                name: tripName,
+                                locationName: locationName,
+                                coordinate: coordinate,
+                                startDate: startDate,
+                                endDate: endDate,
+                                checklist: checklistItems
+                            )
+                            trips.append(newTrip)
+                        }
+
+                        alertMessage = existingTrip == nil ? "\(tripName) added successfully!" : "\(tripName) updated successfully!"
+                        isSuccess = true
+                        showAlert = true
                     }
                 }
-                .scrollContentBackground(.hidden) // <-- makes Form background transparent
+                .scrollContentBackground(.hidden)
                 .background(Color.clear)
-                .navigationTitle("New Trip")
+                .navigationTitle(existingTrip == nil ? "New Trip" : "Edit Trip")
+                .alert(isSuccess ? "Success" : "Notice", isPresented: $showAlert) {
+                    Button("OK") {
+                        if isSuccess { dismiss() }
+                    }
+                } message: {
+                    Text(alertMessage)
+                }
+                .onAppear {
+                    if let trip = existingTrip {
+                        tripName = trip.name
+                        startDate = trip.startDate
+                        endDate = trip.endDate
+                        checklistItems = trip.checklist
+                    }
+                }
             }
         }
     }
 }
+
 #Preview {
-    CreateTripView(trips: .constant([]))
+    CreateTripView(trips: .constant([]), selectedTrip: .constant(nil))
 }
 
 struct LocationPickerView: View {

@@ -9,8 +9,13 @@ import SwiftUI
 
 struct MainView: View {
     @State private var trips: [Trip] = []
-    @State private var selectedTrip: Trip?
+    @State private var selectedTrip: UUID?
     @State private var checklistItems: [CheckListItem] = []
+
+    // Derive the selected trip from the array — always fresh
+    var currentTrip: Trip? {
+        trips.first(where: { $0.id == selectedTrip })
+    }
 
     var body: some View {
         TabView {
@@ -20,7 +25,7 @@ struct MainView: View {
             TripInfoView(trips: $trips, selectedTrip: $selectedTrip)
                 .tabItem { Label("Trip Info", systemImage: "info.circle") }
 
-            if let trip = selectedTrip {
+            if let trip = currentTrip {
                 CountdownView(trip: trip)
                     .tabItem { Label("Countdown", systemImage: "calendar") }
             } else {

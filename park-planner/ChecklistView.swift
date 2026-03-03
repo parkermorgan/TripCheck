@@ -61,12 +61,10 @@ struct TripChecklistTab: View {
                     }
                 }
 
-                Spacer() // Pushes the trip selector to the bottom
+                Spacer()
 
-                // Trip selector button + dropdown
                 if !trips.isEmpty {
                     VStack(spacing: 0) {
-                        // Only the button has a background
                         Button(action: {
                             withAnimation {
                                 showTripList.toggle()

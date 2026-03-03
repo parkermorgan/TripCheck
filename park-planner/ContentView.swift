@@ -32,8 +32,10 @@ struct LargeButton: View {
 
 struct ContentView: View {
     @Binding var trips: [Trip]
-    @Binding var selectedTrip: Trip?
+    @Binding var selectedTrip: UUID?
     @State private var showTrips = false
+    @State private var showTripAlert = false
+    @State private var tappedTrip: Trip?
 
     var body: some View {
         NavigationStack {
@@ -54,7 +56,7 @@ struct ContentView: View {
                         .resizable()
                         .scaledToFit()
                         .frame(width: 300, height: 300)
-                    NavigationLink(destination: CreateTripView(trips: $trips)) {
+                    NavigationLink(destination: CreateTripView(trips: $trips, selectedTrip: $selectedTrip)) {
                         LargeButton(title: "Add Trip")
                     }
                     Button {
@@ -66,6 +68,14 @@ struct ContentView: View {
                     }
                     .disabled(trips.isEmpty)
                     .opacity(trips.isEmpty ? 0.5 : 1)
+                    .alert("Trip Selected", isPresented: $showTripAlert) {
+                        Button("OK") {
+                            selectedTrip = tappedTrip?.id
+                            showTrips = false
+                        }
+                    } message: {
+                        Text("This trip has been selected.")
+                    }
                     .sheet(isPresented: $showTrips) {
                         NavigationStack {
                             VStack {
@@ -80,8 +90,8 @@ struct ContentView: View {
                                 } else {
                                     List(trips) { trip in
                                         Button {
-                                            selectedTrip = trip
-                                            showTrips = false
+                                            tappedTrip = trip
+                                            showTripAlert = true
                                         } label: {
                                             Text(trip.name)
                                         }

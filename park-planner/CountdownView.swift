@@ -1,29 +1,31 @@
-//
-//  CountdownView.swift
-//  park-planner
-//
-//  Created by Parker Morgan on 1/14/26.
-//
-
 import SwiftUI
 import CoreLocation
+import Combine
 
-func daysUntil(_ date: Date) -> Int {
-    let calendar = Calendar.current
-    let startOfToday = calendar.startOfDay(for: Date())
-    let startOfTrip = calendar.startOfDay(for: date)
-    
-    let components = calendar.dateComponents([.day], from: startOfToday, to: startOfTrip)
-    return components.day ?? 0
-}
+// Keep your existing daysUntil helper or replace with the new one below
 
 struct CountdownView: View {
     let trip: Trip
     
-    var daysRemaining: Int {
-        daysUntil(trip.startDate)
+    // Fires every second to keep the countdown live
+    @State private var now: Date = Date()
+    let timer = Timer.publish(every: 1, on: .main, in: .common).autoconnect()
+    
+    // Total seconds remaining until trip start
+    private var secondsRemaining: Int {
+        max(0, Int(trip.startDate.timeIntervalSince(now)))
     }
     
+    private var days: Int    { secondsRemaining / 86400 }
+    private var hours: Int   { (secondsRemaining % 86400) / 3600 }
+    private var minutes: Int { (secondsRemaining % 3600) / 60 }
+    private var seconds: Int { secondsRemaining % 60 }
+    
+    private var tripHasStarted: Bool { now >= trip.startDate }
+    private var isToday: Bool {
+        Calendar.current.isDate(trip.startDate, inSameDayAs: now)
+    }
+
     var body: some View {
         ZStack {
             LinearGradient(
@@ -32,25 +34,57 @@ struct CountdownView: View {
                 endPoint: .bottomTrailing
             )
             .ignoresSafeArea()
+
             VStack(spacing: 12) {
                 Text("Countdown to your trip")
                     .font(.headline)
-                
-                if daysRemaining > 0 {
-                    Text("\(daysRemaining) days to go 🎒")
-                        .font(.largeTitle)
-                        .bold()
-                } else if daysRemaining == 0 {
+
+                if tripHasStarted && !isToday {
+                    Text("Trip already started")
+                        .foregroundColor(.secondary)
+                } else if isToday && tripHasStarted {
                     Text("Trip starts today! ✈️")
                         .font(.largeTitle)
                 } else {
-                    Text("Trip already started")
+                    // Live countdown tiles
+                    HStack(spacing: 20) {
+                        CountdownUnit(value: days,    label: "Days")
+                        CountdownUnit(value: hours,   label: "Hours")
+                        CountdownUnit(value: minutes, label: "Min")
+                        CountdownUnit(value: seconds, label: "Sec")
+                    }
+                    .font(.system(.largeTitle, design: .monospaced))
+                    .bold()
+
+                    Text("until \(trip.name)")
+                        .font(.subheadline)
                         .foregroundColor(.secondary)
                 }
             }
             .padding()
         }
-        
+        // Update `now` every second from the timer
+        .onReceive(timer) { tick in
+            now = tick
+        }
+    }
+}
+
+// Small reusable tile for each time unit
+private struct CountdownUnit: View {
+    let value: Int
+    let label: String
+
+    var body: some View {
+        VStack(spacing: 4) {
+            Text(String(format: "%02d", value))
+            Text(label)
+                .font(.caption)
+                .foregroundColor(.secondary)
+        }
+        .frame(minWidth: 60)
+        .padding(8)
+        .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 10))
     }
 }
 
