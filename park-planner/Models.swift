@@ -8,8 +8,8 @@
 import Foundation
 import CoreLocation
 
-struct CheckListItem: Identifiable {
-    let id = UUID()
+struct CheckListItem: Identifiable, Equatable {
+    var id = UUID()
     var title: String
     var isCompleted: Bool
 }

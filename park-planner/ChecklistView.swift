@@ -8,28 +8,47 @@
 import SwiftUI
 
 struct ChecklistRow: View {
-    @Binding var item: CheckListItem
+    let item: CheckListItem
+    let onToggle: () -> Void
+    let onEdit: (String) -> Void
+    @State private var isEditing = false
+    @State private var editText = ""
 
     var body: some View {
-        Button {
-            item.isCompleted.toggle()
-        } label: {
-            HStack {
+        HStack {
+            Button {
+                onToggle()
+            } label: {
                 Image(systemName: item.isCompleted ? "checkmark.square.fill" : "square")
                     .foregroundColor(item.isCompleted ? .blue : .secondary)
+            }
 
+            if isEditing {
+                TextField("Edit item", text: $editText, onCommit: {
+                    if !editText.isEmpty {
+                        onEdit(editText)
+                    }
+                    isEditing = false
+                })
+                .textFieldStyle(.plain)
+            } else {
                 Text(item.title)
                     .foregroundColor(.primary)
-
                 Spacer()
+                Button {
+                    editText = item.title
+                    isEditing = true
+                } label: {
+                    Image(systemName: "pencil")
+                        .foregroundColor(.secondary)
+                }
+                .buttonStyle(.plain)
             }
-            .padding()
-            .background(Color.white)
-            .cornerRadius(8)
         }
-        .buttonStyle(.plain)
+        .padding()
+        .background(Color.white)
+        .cornerRadius(8)
     }
-        
 }
 
 struct TripChecklistTab: View {
@@ -56,7 +75,7 @@ struct TripChecklistTab: View {
                             .foregroundColor(.secondary)
                             .italic()
                             .padding()
-                            .frame(maxWidth: .infinity, maxHeight: .infinity) // Fill available space
+                            .frame(maxWidth: .infinity, maxHeight: .infinity)
                             .multilineTextAlignment(.center)
                     }
                 }
@@ -116,6 +135,7 @@ struct TripChecklistTab: View {
 
 struct ChecklistView: View {
     @Binding var items: [CheckListItem]
+    @State private var localItems: [CheckListItem] = []
     @State private var newItemText = ""
 
     var body: some View {
@@ -131,7 +151,6 @@ struct ChecklistView: View {
                     TextField("New item", text: $newItemText)
                         .textFieldStyle(.plain)
 
-
                     Button("Add") {
                         addItem()
                     }
@@ -141,13 +160,21 @@ struct ChecklistView: View {
                 .background(Color.white)
                 .cornerRadius(8)
                 .padding(.horizontal, 30)
-                
-                
+
                 List {
-                    ForEach($items) { $item in
-                        ChecklistRow(item: $item)
-                            .listRowBackground(Color.clear)
-                            
+                    ForEach(localItems.indices, id: \.self) { index in
+                        ChecklistRow(
+                            item: localItems[index],
+                            onToggle: {
+                                localItems[index].isCompleted.toggle()
+                                items = localItems
+                            },
+                            onEdit: { newTitle in
+                                localItems[index].title = newTitle
+                                items = localItems
+                            }
+                        )
+                        .listRowBackground(Color.clear)
                     }
                     .onDelete(perform: deleteItems)
                 }
@@ -157,16 +184,21 @@ struct ChecklistView: View {
                 .padding(.horizontal)
             }
         }
+        .onAppear {
+            localItems = items
+        }
     }
 
     private func addItem() {
         guard !newItemText.isEmpty else { return }
-        items.append(CheckListItem(title: newItemText, isCompleted: false))
+        localItems.append(CheckListItem(title: newItemText, isCompleted: false))
+        items = localItems
         newItemText = ""
     }
 
     private func deleteItems(at offsets: IndexSet) {
-        items.remove(atOffsets: offsets)
+        localItems.remove(atOffsets: offsets)
+        items = localItems
     }
 }
 
