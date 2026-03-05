@@ -6,9 +6,11 @@
 //
 
 import SwiftUI
+internal import _LocationEssentials
 
 struct ChecklistRow: View {
     let item: CheckListItem
+    let index: Int
     let onToggle: () -> Void
     let onEdit: (String) -> Void
     @State private var isEditing = false
@@ -46,7 +48,7 @@ struct ChecklistRow: View {
             }
         }
         .padding()
-        .background(Color.white)
+        .background(index % 2 == 0 ? Color.white : Color.blue.opacity(0.20))
         .cornerRadius(30)
     }
 }
@@ -68,8 +70,10 @@ struct TripChecklistTab: View {
             VStack {
                 ZStack {
                     if let id = selectedTripID,
-                       let index = trips.firstIndex(where: { $0.id == id }) {
-                        ChecklistView(items: $trips[index].checklist)
+                       let index = trips.firstIndex(where: { $0.id == id }),
+                       index < trips.count {
+                        ChecklistView(trips: $trips, tripIndex: index)
+                            .id(id)
                     } else {
                         Text("Select a trip to see its checklist")
                             .foregroundColor(.secondary)
@@ -129,14 +133,35 @@ struct TripChecklistTab: View {
                     selectedTripID = lastTrip.id
                 }
             }
+            .onChange(of: trips) { updatedTrips in
+                if updatedTrips.isEmpty {
+                    selectedTripID = nil
+                } else if let id = selectedTripID, !updatedTrips.contains(where: { $0.id == id }) {
+                    selectedTripID = updatedTrips.first?.id
+                }
+            }
         }
     }
 }
 
 struct ChecklistView: View {
-    @Binding var items: [CheckListItem]
+    @Binding var trips: [Trip]
+    let tripIndex: Int
+
     @State private var localItems: [CheckListItem] = []
     @State private var newItemText = ""
+    @State private var selectedCategory = "Travel Prep"
+
+    let categories = ["Travel Prep", "Packing", "At the Park"]
+
+    var visibleIndices: [Int] {
+        localItems.indices.filter { localItems[$0].category == selectedCategory }
+    }
+
+    func saveBack() {
+        guard tripIndex < trips.count else { return }
+        trips[tripIndex].checklist = localItems
+    }
 
     var body: some View {
         ZStack {
@@ -209,6 +234,13 @@ struct ChecklistView: View {
             VStack(spacing: 12) {
                 Spacer().frame(height: 100)
 
+                // Category picker
+                Picker("Category", selection: $selectedCategory) {
+                    ForEach(categories, id: \.self) { Text($0) }
+                }
+                .pickerStyle(.segmented)
+                .padding(.horizontal, 16)
+
                 HStack(spacing: 12) {
                     HStack {
                         TextField("New item", text: $newItemText)
@@ -225,7 +257,7 @@ struct ChecklistView: View {
 
                     Button {
                         localItems.sort { $0.title.lowercased() < $1.title.lowercased() }
-                        items = localItems
+                        saveBack()
                     } label: {
                         Image(systemName: "arrow.up.arrow.down")
                             .foregroundColor(.primary)
@@ -237,18 +269,19 @@ struct ChecklistView: View {
                 .padding(.horizontal, 30)
 
                 List {
-                    ForEach(localItems.indices, id: \.self) { index in
+                    ForEach(Array(visibleIndices.enumerated()), id: \.element) { position, idx in
                         ChecklistRow(
-                            item: localItems[index],
+                            item: localItems[idx],
+                            index: position,
                             onToggle: {
-                                localItems[index].isCompleted.toggle()
+                                localItems[idx].isCompleted.toggle()
                                 DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
-                                    items = localItems
+                                    saveBack()
                                 }
                             },
                             onEdit: { newTitle in
-                                localItems[index].title = newTitle
-                                items = localItems
+                                localItems[idx].title = newTitle
+                                saveBack()
                             }
                         )
                         .listRowBackground(Color.clear)
@@ -259,26 +292,56 @@ struct ChecklistView: View {
                 .scrollContentBackground(.hidden)
                 .background(Color.clear)
                 .padding(.horizontal, 16)
+
+                if !visibleIndices.isEmpty {
+                    Button(role: .destructive) {
+                        localItems.removeAll { $0.category == selectedCategory }
+                        saveBack()
+                    } label: {
+                        Text("Clear All")
+                            .font(.subheadline)
+                            .foregroundColor(.red)
+                            .padding(.vertical, 8)
+                            .padding(.horizontal, 24)
+                            .background(Color.white)
+                            .cornerRadius(20)
+                    }
+                    .padding(.bottom, 8)
+                }
             }
         }
         .onAppear {
-            localItems = items
+            guard tripIndex < trips.count else { return }
+            localItems = trips[tripIndex].checklist
         }
     }
 
     private func addItem() {
         guard !newItemText.isEmpty else { return }
-        localItems.append(CheckListItem(title: newItemText, isCompleted: false))
-        items = localItems
+        localItems.append(CheckListItem(title: newItemText, isCompleted: false, category: selectedCategory))
+        saveBack()
         newItemText = ""
     }
 
     private func deleteItems(at offsets: IndexSet) {
-        localItems.remove(atOffsets: offsets)
-        items = localItems
+        let toDelete = offsets.map { visibleIndices[$0] }
+        localItems.remove(atOffsets: IndexSet(toDelete))
+        saveBack()
     }
 }
 
 #Preview {
-    ChecklistView(items: .constant([CheckListItem(title: "Sample item", isCompleted: false)]))
+    @State var trips = [Trip(
+        name: "Sample Trip",
+        locationName: "Yosemite",
+        coordinate: .init(latitude: 37.8651, longitude: -119.5383),
+        startDate: Date(),
+        endDate: Date().addingTimeInterval(86400 * 5),
+        checklist: [
+            CheckListItem(title: "Book flights", isCompleted: false, category: "Travel Prep"),
+            CheckListItem(title: "Pack clothes", isCompleted: false, category: "Packing"),
+            CheckListItem(title: "Buy park pass", isCompleted: false, category: "At the Park")
+        ]
+    )]
+    return ChecklistView(trips: $trips, tripIndex: 0)
 }

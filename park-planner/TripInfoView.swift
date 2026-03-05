@@ -60,7 +60,11 @@ struct TripInfoView: View {
                                     if selectedTrip == tripToDelete.id {
                                         selectedTrip = nil
                                     }
-                                    trips.remove(at: index)
+                                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                                        if index < trips.count {
+                                            trips.remove(at: index)
+                                        }
+                                    }
                                 }
                                 .foregroundColor(.red)
                             }

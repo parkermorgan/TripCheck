@@ -12,7 +12,24 @@ struct CheckListItem: Identifiable, Equatable {
     var id = UUID()
     var title: String
     var isCompleted: Bool
+    var category: String
 }
+
+let defaultChecklistItems: [CheckListItem] = [
+    // Travel Prep
+    CheckListItem(title: "Book flights", isCompleted: false, category: "Travel Prep"),
+    CheckListItem(title: "Book hotel", isCompleted: false, category: "Travel Prep"),
+    CheckListItem(title: "Check passport expiry", isCompleted: false, category: "Travel Prep"),
+
+    // Packing
+    CheckListItem(title: "Pack clothes", isCompleted: false, category: "Packing"),
+    CheckListItem(title: "Pack toiletries", isCompleted: false, category: "Packing"),
+    CheckListItem(title: "Pack chargers", isCompleted: false, category: "Packing"),
+
+    // At the Park
+    CheckListItem(title: "Download offline maps", isCompleted: false, category: "At the Park"),
+    CheckListItem(title: "Buy park pass", isCompleted: false, category: "At the Park"),
+]
 
 struct Trip: Identifiable, Equatable {
     var id = UUID()

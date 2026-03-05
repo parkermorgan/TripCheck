@@ -91,7 +91,7 @@ struct CreateTripView: View {
                                 coordinate: coordinate,
                                 startDate: startDate,
                                 endDate: endDate,
-                                checklist: checklistItems
+                                checklist: defaultChecklistItems
                             )
                             trips.append(newTrip)
                         }
