@@ -6,29 +6,7 @@
 //
 
 import SwiftUI
-
-struct LargeButton: View {
-    let title: String
-
-    var body: some View {
-        Text(title)
-            .font(.headline)
-            .frame(width: 250)
-            .padding()
-            .background(
-                LinearGradient(
-                    colors: [
-                        Color(red: 24/255, green: 195/255, blue: 249/255),
-                        Color.blue.opacity(0.3)
-                    ],
-                    startPoint: .top,
-                    endPoint: .bottom
-                )
-            )
-            .foregroundColor(.white)
-            .cornerRadius(12)
-    }
-}
+import CoreLocation
 
 struct ContentView: View {
     @Binding var trips: [Trip]
@@ -47,86 +25,199 @@ struct ContentView: View {
                 )
                 .ignoresSafeArea()
 
+                VStack {
+                    HStack {
+                        Rectangle()
+                            .fill(
+                                LinearGradient(
+                                    colors: [Color.blue.opacity(0.5), Color.purple.opacity(0.4)],
+                                    startPoint: .leading,
+                                    endPoint: .trailing
+                                )
+                            )
+                            .frame(width: UIScreen.main.bounds.width * 0.75, height: 130)
+                            .clipShape(
+                                .rect(
+                                    topLeadingRadius: 0,
+                                    bottomLeadingRadius: 0,
+                                    bottomTrailingRadius: 80,
+                                    topTrailingRadius: 0
+                                )
+                            )
+                            .overlay(
+                                Text("TripCheck")
+                                    .font(.title2)
+                                    .fontWeight(.semibold)
+                                    .foregroundColor(.white)
+                                    .padding(.leading, 20),
+                                alignment: .leading
+                            )
+                        Spacer()
+                    }
+                    .ignoresSafeArea()
+
+                    Spacer()
+
+                    HStack {
+                        Spacer()
+                        Rectangle()
+                            .fill(
+                                LinearGradient(
+                                    colors: [Color.purple.opacity(0.4), Color.blue.opacity(0.5)],
+                                    startPoint: .leading,
+                                    endPoint: .trailing
+                                )
+                            )
+                            .frame(width: UIScreen.main.bounds.width * 0.75, height: 130)
+                            .clipShape(
+                                .rect(
+                                    topLeadingRadius: 80,
+                                    bottomLeadingRadius: 0,
+                                    bottomTrailingRadius: 0,
+                                    topTrailingRadius: 0
+                                )
+                            )
+                    }
+                    .ignoresSafeArea()
+                }
+
                 VStack(spacing: 24) {
-                    Spacer(minLength: 0)
-                    Text("TripCheck")
-                        .font(.largeTitle)
+                    Spacer().frame(height: 100)
 
                     Image("TripCheck-logo")
                         .resizable()
                         .scaledToFit()
-                        .frame(width: 300, height: 300)
-                    NavigationLink(destination: CreateTripView(trips: $trips, selectedTrip: $selectedTrip)) {
-                        LargeButton(title: "Add Trip")
-                    }
-                    Button {
-                        withAnimation {
-                            showTrips.toggle()
-                        }
-                    } label: {
-                        LargeButton(title: showTrips ? "Hide Trips" : "View Trips")
-                    }
-                    .disabled(trips.isEmpty)
-                    .opacity(trips.isEmpty ? 0.5 : 1)
-                    .alert("Trip Selected", isPresented: $showTripAlert) {
-                        Button("OK") {
-                            selectedTrip = tappedTrip?.id
-                            showTrips = false
-                        }
-                    } message: {
-                        Text("This trip has been selected.")
-                    }
-                    .sheet(isPresented: $showTrips) {
-                        NavigationStack {
-                            VStack {
-                                Text("Your Trips")
-                                    .font(.title)
-                                    .padding()
+                        .frame(width: 140, height: 140)
+                        .clipShape(RoundedRectangle(cornerRadius: 32))
+                        .shadow(color: .black.opacity(0.15), radius: 12, x: 0, y: 6)
 
-                                if trips.isEmpty {
-                                    Text("No trips available.")
-                                        .foregroundColor(.secondary)
-                                        .padding()
-                                } else {
-                                    List(trips) { trip in
-                                        Button {
-                                            tappedTrip = trip
-                                            showTripAlert = true
-                                        } label: {
+                    VStack(spacing: 6) {
+                        Text("Welcome to TripCheck")
+                            .font(.title2)
+                            .fontWeight(.bold)
+
+                        Text("Plan your next adventure")
+                            .font(.subheadline)
+                            .foregroundColor(.secondary)
+                    }
+
+                    VStack(spacing: 12) {
+                        NavigationLink(destination: CreateTripView(trips: $trips, selectedTrip: $selectedTrip)) {
+                            HStack {
+                                Image(systemName: "plus.circle.fill")
+                                Text("Add Trip")
+                                    .font(.headline)
+                            }
+                            .foregroundColor(.white)
+                            .frame(maxWidth: .infinity)
+                            .padding(.vertical, 16)
+                            .background(
+                                LinearGradient(
+                                    colors: [Color.blue.opacity(0.7), Color.purple.opacity(0.7)],
+                                    startPoint: .leading,
+                                    endPoint: .trailing
+                                )
+                            )
+                            .cornerRadius(30)
+                        }
+
+                        Button {
+                            withAnimation { showTrips.toggle() }
+                        } label: {
+                            HStack {
+                                Image(systemName: "list.bullet.circle.fill")
+                                Text(showTrips ? "Hide Trips" : "View Trips")
+                                    .font(.headline)
+                            }
+                            .foregroundColor(.white)
+                            .frame(maxWidth: .infinity)
+                            .padding(.vertical, 16)
+                            .background(
+                                trips.isEmpty
+                                ? AnyShapeStyle(Color.gray.opacity(0.4))
+                                : AnyShapeStyle(LinearGradient(
+                                    colors: [Color.purple.opacity(0.7), Color.blue.opacity(0.7)],
+                                    startPoint: .leading,
+                                    endPoint: .trailing
+                                ))
+                            )
+                            .cornerRadius(30)
+                        }
+                        .disabled(trips.isEmpty)
+                    }
+                    .padding(.horizontal, 30)
+
+                    if showTrips && !trips.isEmpty {
+                        VStack(alignment: .leading, spacing: 8) {
+                            Text("Your Trips")
+                                .font(.headline)
+                                .padding(.horizontal, 8)
+
+                            ForEach(trips) { trip in
+                                Button {
+                                    tappedTrip = trip
+                                    showTripAlert = true
+                                } label: {
+                                    HStack {
+                                        Image(systemName: "mappin.circle.fill")
+                                            .foregroundColor(.blue)
+                                        VStack(alignment: .leading, spacing: 2) {
                                             Text(trip.name)
+                                                .font(.subheadline)
+                                                .fontWeight(.semibold)
+                                                .foregroundColor(.primary)
+                                            Text(trip.locationName)
+                                                .font(.caption)
+                                                .foregroundColor(.secondary)
                                         }
+                                        Spacer()
+                                        Image(systemName: "chevron.right")
+                                            .font(.caption)
+                                            .foregroundColor(.secondary)
                                     }
-                                    .listStyle(.plain)
+                                    .padding(.horizontal, 20)
+                                    .padding(.vertical, 12)
+                                    .background(Color.white.opacity(0.85))
+                                    .cornerRadius(30)
                                 }
-                                Spacer()
-                                Button("Close") {
-                                    showTrips = false
-                                }
-                                .padding()
                             }
                         }
+                        .padding(.horizontal, 30)
                     }
 
                     Spacer()
-                        .padding(.top)
+
                     Text("Created by Parker Morgan")
                         .foregroundColor(.secondary)
                         .italic()
+                        .font(.caption)
                         .padding(.bottom, 25)
-                    
                 }
-                .padding(.horizontal)
-                .padding(.top, 20)
+                .alert("Trip Selected", isPresented: $showTripAlert) {
+                    Button("OK") {
+                        selectedTrip = tappedTrip?.id
+                        showTrips = false
+                    }
+                } message: {
+                    Text("This trip has been selected.")
+                }
             }
         }
     }
 }
 
-
-
 #Preview {
     ContentView(
-        trips: .constant([]),
+        trips: .constant([
+            Trip(
+                name: "Hawaii Trip",
+                locationName: "Honolulu",
+                coordinate: .init(latitude: 21.3069, longitude: -157.8583),
+                startDate: Date(),
+                endDate: Date().addingTimeInterval(86400 * 5),
+                checklist: []
+            )
+        ]),
         selectedTrip: .constant(nil)
     )
 }
