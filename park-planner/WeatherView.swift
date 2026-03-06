@@ -287,7 +287,7 @@ struct WeatherView: View {
         let daysToRequest = max(7, min(totalDaysNeeded, maxForecastDays))
 
 
-        let urlString = "https://api.open-meteo.com/v1/forecast?latitude=\(trip.coordinate.latitude)&longitude=\(trip.coordinate.longitude)&current_weather=true&daily=temperature_2m_max,temperature_2m_min,weathercode&forecast_days=\(min(totalDaysNeeded, maxForecastDays))&temperature_unit=fahrenheit&timezone=auto"
+        let urlString = "https://api.open-meteo.com/v1/forecast?latitude=\(trip.coordinate.latitude)&longitude=\(trip.coordinate.longitude)&current_weather=true&daily=temperature_2m_max,temperature_2m_min,weathercode&forecast_days=\(daysToRequest)&temperature_unit=fahrenheit&timezone=auto"
 
         guard let url = URL(string: urlString) else {
             DispatchQueue.main.async { self.temperatureText = "--"; self.conditionText = "Invalid URL" }

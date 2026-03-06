@@ -6,19 +6,39 @@
 //
 
 import SwiftUI
+import UserNotifications
+
+
+
+func scheduleTripNotification(for trip: Trip) {
+    let content = UNMutableNotificationContent()
+    content.title = "Your trip starts today! ✈️"
+    content.body = "\(trip.name) to \(trip.locationName) begins today. Have a great trip!"
+    content.sound = .default
+
+    var dateComponents = Calendar.current.dateComponents([.year, .month, .day], from: trip.startDate)
+    dateComponents.hour = 8
+    dateComponents.minute = 0
+
+    let trigger = UNTimeIntervalNotificationTrigger(timeInterval: 7, repeats: false)
+    let request = UNNotificationRequest(identifier: trip.id.uuidString, content: content, trigger: trigger)
+
+    UNUserNotificationCenter.current().add(request)
+}
+
+func cancelTripNotification(for trip: Trip) {
+    UNUserNotificationCenter.current().removePendingNotificationRequests(withIdentifiers: [trip.id.uuidString])
+}
 
 struct MainView: View {
-    @State private var trips: [Trip] = []
+    @State private var trips: [Trip] = loadTrips()
     @State private var selectedTrip: UUID?
     @State private var checklistItems: [CheckListItem] = []
 
-    // Derive the selected trip from the array — always fresh
     var currentTrip: Trip? {
         trips.first(where: { $0.id == selectedTrip })
     }
-    
-    
-    // Show tabs at bottom of screen.
+
     var body: some View {
         TabView {
             ContentView(trips: $trips, selectedTrip: $selectedTrip)
@@ -54,10 +74,39 @@ struct MainView: View {
             TripChecklistTab(trips: $trips)
                 .tabItem { Label("Checklist", systemImage: "checkmark.circle") }
         }
+        .onAppear {
+            UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .sound, .badge]) { granted, _ in
+                if granted {
+                    for trip in trips {
+                        scheduleTripNotification(for: trip)
+                    }
+                }
+            }
+        }
+        .onChange(of: trips) { updatedTrips in
+            saveTrips(updatedTrips)
+
+            let oldIDs = Set(trips.map { $0.id })
+            let newIDs = Set(updatedTrips.map { $0.id })
+
+            for trip in trips where !newIDs.contains(trip.id) {
+                cancelTripNotification(for: trip)
+            }
+
+            UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .sound, .badge]) { granted, _ in
+                if granted {
+                    for trip in updatedTrips where !oldIDs.contains(trip.id) {
+                        scheduleTripNotification(for: trip)
+                        print("Scheduled notification for \(trip.name)")
+                    }
+                } else {
+                    print("Notification permission denied")
+                }
+            }
+        }
     }
 }
 
 #Preview {
     MainView()
-        
 }

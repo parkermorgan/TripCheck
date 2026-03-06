@@ -10,7 +10,7 @@ import CoreLocation
 
 
 // Models that are created for needed items, views pull from models for data.
-struct CheckListItem: Identifiable, Equatable {
+struct CheckListItem: Identifiable, Equatable, Codable {
     var id = UUID()
     var title: String
     var isCompleted: Bool
@@ -33,7 +33,7 @@ let defaultChecklistItems: [CheckListItem] = [
     CheckListItem(title: "Buy park pass", isCompleted: false, category: "At the Park"),
 ]
 
-struct Trip: Identifiable, Equatable {
+struct Trip: Identifiable, Equatable, Codable {
     var id = UUID()
     var name: String
     var locationName: String
@@ -48,5 +48,44 @@ struct Trip: Identifiable, Equatable {
         lhs.locationName == rhs.locationName &&
         lhs.startDate == rhs.startDate &&
         lhs.endDate == rhs.endDate
+    }
+
+    enum CodingKeys: String, CodingKey {
+        case id, name, locationName, latitude, longitude, startDate, endDate, checklist
+    }
+
+    init(id: UUID = UUID(), name: String, locationName: String, coordinate: CLLocationCoordinate2D, startDate: Date, endDate: Date, checklist: [CheckListItem]) {
+        self.id = id
+        self.name = name
+        self.locationName = locationName
+        self.coordinate = coordinate
+        self.startDate = startDate
+        self.endDate = endDate
+        self.checklist = checklist
+    }
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        id = try container.decode(UUID.self, forKey: .id)
+        name = try container.decode(String.self, forKey: .name)
+        locationName = try container.decode(String.self, forKey: .locationName)
+        let latitude = try container.decode(Double.self, forKey: .latitude)
+        let longitude = try container.decode(Double.self, forKey: .longitude)
+        coordinate = CLLocationCoordinate2D(latitude: latitude, longitude: longitude)
+        startDate = try container.decode(Date.self, forKey: .startDate)
+        endDate = try container.decode(Date.self, forKey: .endDate)
+        checklist = try container.decode([CheckListItem].self, forKey: .checklist)
+    }
+
+    func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        try container.encode(id, forKey: .id)
+        try container.encode(name, forKey: .name)
+        try container.encode(locationName, forKey: .locationName)
+        try container.encode(coordinate.latitude, forKey: .latitude)
+        try container.encode(coordinate.longitude, forKey: .longitude)
+        try container.encode(startDate, forKey: .startDate)
+        try container.encode(endDate, forKey: .endDate)
+        try container.encode(checklist, forKey: .checklist)
     }
 }

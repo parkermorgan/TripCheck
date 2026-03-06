@@ -1,6 +1,7 @@
 import SwiftUI
 import MapKit
 import CoreLocation
+import UserNotifications
 
 struct CreateTripView: View {
     @State private var selectedLocation: MKMapItem?
@@ -207,6 +208,15 @@ struct CreateTripView: View {
                                     checklist: defaultChecklistItems
                                 )
                                 trips.append(newTrip)
+                                
+                                UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .sound, .badge]) { granted, _ in
+                                        if granted {
+                                            scheduleTripNotification(for: newTrip)
+                                            print("Notification scheduled for \(newTrip.name)")
+                                        } else {
+                                            print("Permission denied")
+                                        }
+                                    }
                             }
 
                             alertMessage = existingTrip == nil ? "\(tripName) added successfully!" : "\(tripName) updated successfully!"
