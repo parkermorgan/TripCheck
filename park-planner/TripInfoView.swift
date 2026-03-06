@@ -171,6 +171,7 @@ struct TripInfoView: View {
     }
 }
 
+// Sample data for preview.
 #Preview {
     TripInfoView(
         trips: .constant([

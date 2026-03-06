@@ -252,6 +252,7 @@ struct CreateTripView: View {
     }
 }
 
+// Sample Preview (data not required).
 #Preview {
     CreateTripView(trips: .constant([]), selectedTrip: .constant(nil))
 }

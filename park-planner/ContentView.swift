@@ -9,6 +9,8 @@ import SwiftUI
 import CoreLocation
 
 struct ContentView: View {
+    
+    // State variables
     @Binding var trips: [Trip]
     @Binding var selectedTrip: UUID?
     @State private var showTrips = false
@@ -18,6 +20,7 @@ struct ContentView: View {
     var body: some View {
         NavigationStack {
             ZStack {
+                // Background gradient
                 LinearGradient(
                     colors: [Color.blue.opacity(0.3), Color.purple.opacity(0.3)],
                     startPoint: .topLeading,
@@ -91,6 +94,7 @@ struct ContentView: View {
                         .clipShape(RoundedRectangle(cornerRadius: 32))
                         .shadow(color: .black.opacity(0.15), radius: 12, x: 0, y: 6)
 
+                    // Welcome text
                     VStack(spacing: 6) {
                         Text("Welcome to TripCheck")
                             .font(.title2)
@@ -101,6 +105,7 @@ struct ContentView: View {
                             .foregroundColor(.secondary)
                     }
 
+                    // Buttons for adding and vewing trips
                     VStack(spacing: 12) {
                         NavigationLink(destination: CreateTripView(trips: $trips, selectedTrip: $selectedTrip)) {
                             HStack {
@@ -147,6 +152,7 @@ struct ContentView: View {
                     }
                     .padding(.horizontal, 30)
 
+                    // Shows trip button, only shows if trips have been created.
                     if showTrips && !trips.isEmpty {
                         VStack(alignment: .leading, spacing: 8) {
                             Text("Your Trips")
@@ -193,6 +199,8 @@ struct ContentView: View {
                         .font(.caption)
                         .padding(.bottom, 25)
                 }
+                
+                // Confirms trip selection to user.
                 .alert("Trip Selected", isPresented: $showTripAlert) {
                     Button("OK") {
                         selectedTrip = tappedTrip?.id
@@ -206,6 +214,7 @@ struct ContentView: View {
     }
 }
 
+// Sample data for preview.
 #Preview {
     ContentView(
         trips: .constant([

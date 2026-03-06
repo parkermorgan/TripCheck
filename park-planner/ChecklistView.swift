@@ -8,6 +8,8 @@
 import SwiftUI
 internal import _LocationEssentials
 
+
+// Displays a single row in the checklist list. Shows checkbox button, title text. and edit button.
 struct ChecklistRow: View {
     let item: CheckListItem
     let index: Int
@@ -53,6 +55,8 @@ struct ChecklistRow: View {
     }
 }
 
+// Outer view that handles the trip selection.
+// Shows ChecklistView for which trip is selection, renders dropdown button to allow for switching of trips.
 struct TripChecklistTab: View {
     @Binding var trips: [Trip]
     @State private var selectedTripID: UUID?
@@ -144,10 +148,12 @@ struct TripChecklistTab: View {
     }
 }
 
+// States variables for checklist and displays tabs
 struct ChecklistView: View {
     @Binding var trips: [Trip]
     let tripIndex: Int
-
+ 
+    // Copy of the checklist that gets edited, gets saved back to binding.
     @State private var localItems: [CheckListItem] = []
     @State private var newItemText = ""
     @State private var selectedCategory = "Travel Prep"
@@ -172,7 +178,7 @@ struct ChecklistView: View {
             )
             .ignoresSafeArea()
 
-            // Decorative banner shape
+            // Decorative banner shape, draws two gradient rectangles
             VStack {
                 HStack {
                     Rectangle()
@@ -316,6 +322,7 @@ struct ChecklistView: View {
         }
     }
 
+    // Appends new CheckListItem to localItems.
     private func addItem() {
         guard !newItemText.isEmpty else { return }
         localItems.append(CheckListItem(title: newItemText, isCompleted: false, category: selectedCategory))
@@ -323,6 +330,7 @@ struct ChecklistView: View {
         newItemText = ""
     }
 
+    // Handles swipe-to-delete.
     private func deleteItems(at offsets: IndexSet) {
         let toDelete = offsets.map { visibleIndices[$0] }
         localItems.remove(atOffsets: IndexSet(toDelete))
@@ -330,6 +338,7 @@ struct ChecklistView: View {
     }
 }
 
+// Sample data for preview.
 #Preview {
     @State var trips = [Trip(
         name: "Sample Trip",

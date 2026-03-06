@@ -392,6 +392,7 @@ struct WeatherView: View {
     }
 }
 
+// Sample data for preview.
 #Preview {
     WeatherView(
         trips: .constant([

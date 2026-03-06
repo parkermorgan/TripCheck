@@ -88,6 +88,7 @@ private struct CountdownUnit: View {
     }
 }
 
+// Sample data for preview.
 #Preview {
     CountdownView(
         trip: Trip(

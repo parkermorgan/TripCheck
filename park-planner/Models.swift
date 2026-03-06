@@ -8,6 +8,8 @@
 import Foundation
 import CoreLocation
 
+
+// Models that are created for needed items, views pull from models for data.
 struct CheckListItem: Identifiable, Equatable {
     var id = UUID()
     var title: String

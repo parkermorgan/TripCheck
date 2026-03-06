@@ -16,7 +16,9 @@ struct MainView: View {
     var currentTrip: Trip? {
         trips.first(where: { $0.id == selectedTrip })
     }
-
+    
+    
+    // Show tabs at bottom of screen.
     var body: some View {
         TabView {
             ContentView(trips: $trips, selectedTrip: $selectedTrip)
