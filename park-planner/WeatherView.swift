@@ -231,7 +231,7 @@ struct WeatherView: View {
                                             HStack {
                                                 Text(day.date)
                                                     .font(.subheadline)
-                                                    .frame(width: 44, alignment: .leading)
+                                                    .frame(width: 100, alignment: .leading)
 
                                                 Spacer()
 
@@ -283,7 +283,9 @@ struct WeatherView: View {
         let tripDuration = max(1, (Calendar.current.dateComponents([.day], from: tripStart, to: tripEnd).day ?? 0) + 1)
 
         let totalDaysNeeded = daysUntilTrip + tripDuration
-        let maxForecastDays = 16
+        let maxForecastDays = 17
+        let daysToRequest = max(7, min(totalDaysNeeded, maxForecastDays))
+
 
         let urlString = "https://api.open-meteo.com/v1/forecast?latitude=\(trip.coordinate.latitude)&longitude=\(trip.coordinate.longitude)&current_weather=true&daily=temperature_2m_max,temperature_2m_min,weathercode&forecast_days=\(min(totalDaysNeeded, maxForecastDays))&temperature_unit=fahrenheit&timezone=auto"
 

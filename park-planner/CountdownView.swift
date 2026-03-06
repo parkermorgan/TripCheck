@@ -2,25 +2,21 @@ import SwiftUI
 import CoreLocation
 import Combine
 
-// Keep your existing daysUntil helper or replace with the new one below
-
 struct CountdownView: View {
     let trip: Trip
-    
-    // Fires every second to keep the countdown live
+
     @State private var now: Date = Date()
     let timer = Timer.publish(every: 1, on: .main, in: .common).autoconnect()
-    
-    // Total seconds remaining until trip start
+
     private var secondsRemaining: Int {
         max(0, Int(trip.startDate.timeIntervalSince(now)))
     }
-    
+
     private var days: Int    { secondsRemaining / 86400 }
     private var hours: Int   { (secondsRemaining % 86400) / 3600 }
     private var minutes: Int { (secondsRemaining % 3600) / 60 }
     private var seconds: Int { secondsRemaining % 60 }
-    
+
     private var tripHasStarted: Bool { now >= trip.startDate }
     private var isToday: Bool {
         Calendar.current.isDate(trip.startDate, inSameDayAs: now)
@@ -35,60 +31,151 @@ struct CountdownView: View {
             )
             .ignoresSafeArea()
 
-            VStack(spacing: 12) {
-                Text("Countdown to your trip")
-                    .font(.headline)
+            VStack {
+                HStack {
+                    Rectangle()
+                        .fill(
+                            LinearGradient(
+                                colors: [Color.blue.opacity(0.5), Color.purple.opacity(0.4)],
+                                startPoint: .leading,
+                                endPoint: .trailing
+                            )
+                        )
+                        .frame(width: UIScreen.main.bounds.width * 0.75, height: 130)
+                        .clipShape(
+                            .rect(
+                                topLeadingRadius: 0,
+                                bottomLeadingRadius: 0,
+                                bottomTrailingRadius: 80,
+                                topTrailingRadius: 0
+                            )
+                        )
+                        .overlay(
+                            Text("Countdown")
+                                .font(.title2)
+                                .fontWeight(.semibold)
+                                .foregroundColor(.white)
+                                .padding(.leading, 20),
+                            alignment: .leading
+                        )
+                    Spacer()
+                }
+                .ignoresSafeArea()
+
+                Spacer()
+
+                HStack {
+                    Spacer()
+                    Rectangle()
+                        .fill(
+                            LinearGradient(
+                                colors: [Color.purple.opacity(0.4), Color.blue.opacity(0.5)],
+                                startPoint: .leading,
+                                endPoint: .trailing
+                            )
+                        )
+                        .frame(width: UIScreen.main.bounds.width * 0.75, height: 130)
+                        .clipShape(
+                            .rect(
+                                topLeadingRadius: 80,
+                                bottomLeadingRadius: 0,
+                                bottomTrailingRadius: 0,
+                                topTrailingRadius: 0
+                            )
+                        )
+                }
+                .ignoresSafeArea()
+            }
+
+            VStack(spacing: 24) {
+                Spacer().frame(height: 100)
+
+                VStack(spacing: 6) {
+                    Text("Countdown to your trip")
+                        .font(.headline)
+                        .foregroundColor(.secondary)
+
+                    Text(trip.name)
+                        .font(.title2)
+                        .fontWeight(.bold)
+                }
 
                 if tripHasStarted && !isToday {
-                    Text("Trip already started")
-                        .foregroundColor(.secondary)
+                    VStack(spacing: 10) {
+                        Image(systemName: "checkmark.circle.fill")
+                            .font(.system(size: 48))
+                            .foregroundColor(.blue)
+
+                        Text("Trip already started")
+                            .font(.headline)
+                            .foregroundColor(.secondary)
+                    }
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 32)
+                    .background(Color.white.opacity(0.85))
+                    .cornerRadius(30)
+                    .padding(.horizontal, 30)
+
                 } else if isToday && tripHasStarted {
-                    Text("Trip starts today! ✈️")
-                        .font(.largeTitle)
+                    VStack(spacing: 10) {
+                        Text("✈️")
+                            .font(.system(size: 48))
+
+                        Text("Trip starts today!")
+                            .font(.title2)
+                            .fontWeight(.bold)
+                    }
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 32)
+                    .background(Color.white.opacity(0.85))
+                    .cornerRadius(30)
+                    .padding(.horizontal, 30)
+
                 } else {
-                    // Live countdown tiles
-                    HStack(spacing: 20) {
+                    HStack(spacing: 12) {
                         CountdownUnit(value: days,    label: "Days")
                         CountdownUnit(value: hours,   label: "Hours")
                         CountdownUnit(value: minutes, label: "Min")
                         CountdownUnit(value: seconds, label: "Sec")
                     }
-                    .font(.system(.largeTitle, design: .monospaced))
-                    .bold()
+                    .padding(.horizontal, 30)
 
-                    Text("until \(trip.name)")
+                    Text("until \(trip.locationName)")
                         .font(.subheadline)
                         .foregroundColor(.secondary)
                 }
+
+                Spacer()
             }
             .padding()
         }
-        // Update `now` every second from the timer
         .onReceive(timer) { tick in
             now = tick
         }
     }
 }
 
-// Small reusable tile for each time unit
 private struct CountdownUnit: View {
     let value: Int
     let label: String
 
     var body: some View {
-        VStack(spacing: 4) {
+        VStack(spacing: 6) {
             Text(String(format: "%02d", value))
+                .font(.system(size: 36, weight: .bold, design: .monospaced))
+                .foregroundColor(.primary)
+
             Text(label)
                 .font(.caption)
                 .foregroundColor(.secondary)
         }
-        .frame(minWidth: 60)
-        .padding(8)
-        .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 10))
+        .frame(maxWidth: .infinity)
+        .padding(.vertical, 16)
+        .background(Color.white.opacity(0.85))
+        .cornerRadius(30)
     }
 }
 
-// Sample data for preview.
 #Preview {
     CountdownView(
         trip: Trip(
