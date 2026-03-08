@@ -6,7 +6,16 @@
 	objectVersion = 77;
 	objects = {
 
+/* Begin PBXBuildFile section */
+		082012422F5D3D03009D6514 /* .gitignore in Resources */ = {isa = PBXBuildFile; fileRef = 082012412F5D3CF7009D6514 /* .gitignore */; };
+		082012442F5D3DA9009D6514 /* Secrets.plist in Resources */ = {isa = PBXBuildFile; fileRef = 082012432F5D3DA9009D6514 /* Secrets.plist */; };
+		082012482F5D3E61009D6514 /* Secrets.example.plist in Resources */ = {isa = PBXBuildFile; fileRef = 082012472F5D3E61009D6514 /* Secrets.example.plist */; };
+/* End PBXBuildFile section */
+
 /* Begin PBXFileReference section */
+		082012412F5D3CF7009D6514 /* .gitignore */ = {isa = PBXFileReference; lastKnownFileType = text; path = .gitignore; sourceTree = "<group>"; };
+		082012432F5D3DA9009D6514 /* Secrets.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Secrets.plist; sourceTree = "<group>"; };
+		082012472F5D3E61009D6514 /* Secrets.example.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Secrets.example.plist; sourceTree = "<group>"; };
 		086957E12F12B6EB001AB7D8 /* park-planner.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "park-planner.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
@@ -32,8 +41,11 @@
 		086957D82F12B6EB001AB7D8 = {
 			isa = PBXGroup;
 			children = (
+				082012432F5D3DA9009D6514 /* Secrets.plist */,
+				082012472F5D3E61009D6514 /* Secrets.example.plist */,
 				086957E32F12B6EB001AB7D8 /* park-planner */,
 				086957E22F12B6EB001AB7D8 /* Products */,
+				082012412F5D3CF7009D6514 /* .gitignore */,
 			);
 			sourceTree = "<group>";
 		};
@@ -109,6 +121,9 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				082012422F5D3D03009D6514 /* .gitignore in Resources */,
+				082012442F5D3DA9009D6514 /* Secrets.plist in Resources */,
+				082012482F5D3E61009D6514 /* Secrets.example.plist in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

@@ -92,11 +92,26 @@ struct WeatherView: View {
 
             VStack(spacing: 12) {
                 Spacer().frame(height: 100)
-
                 if trips.isEmpty {
-                    Text("Select a trip to see its weather")
-                        .foregroundColor(.secondary)
-                        .italic()
+                    VStack(spacing: 10) {
+                        Image(systemName: "sun.max")
+                            .font(.system(size: 40))
+                            .foregroundColor(.secondary)
+
+                        Text("No trips planned yet")
+                            .font(.headline)
+
+                        Text("Add a trip to see its weather")
+                            .font(.subheadline)
+                            .foregroundColor(.secondary)
+                            .multilineTextAlignment(.center)
+                    }
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 32)
+                    .background(Color(.systemBackground).opacity(0.85))
+                    .cornerRadius(30)
+                    .padding(.horizontal, 30)
+
                 } else {
                     ScrollView(.horizontal, showsIndicators: false) {
                         HStack(spacing: 12) {
@@ -260,8 +275,9 @@ struct WeatherView: View {
                         Text("Tap a trip to view weather")
                             .foregroundColor(.secondary)
                     }
-                }
 
+                    Spacer()
+                }
                 Spacer()
             }
         }
@@ -285,7 +301,6 @@ struct WeatherView: View {
         let totalDaysNeeded = daysUntilTrip + tripDuration
         let maxForecastDays = 17
         let daysToRequest = max(7, min(totalDaysNeeded, maxForecastDays))
-
 
         let urlString = "https://api.open-meteo.com/v1/forecast?latitude=\(trip.coordinate.latitude)&longitude=\(trip.coordinate.longitude)&current_weather=true&daily=temperature_2m_max,temperature_2m_min,weathercode&forecast_days=\(daysToRequest)&temperature_unit=fahrenheit&timezone=auto"
 

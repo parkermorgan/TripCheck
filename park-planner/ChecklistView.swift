@@ -56,7 +56,7 @@ struct ChecklistRow: View {
 }
 
 // Outer view that handles the trip selection.
-// Shows ChecklistView for which trip is selection, renders dropdown button to allow for switching of trips.
+// Shows ChecklistView for which trip is selected, renders dropdown button to allow for switching of trips.
 struct TripChecklistTab: View {
     @Binding var trips: [Trip]
     @State private var selectedTripID: UUID?
@@ -71,6 +71,63 @@ struct TripChecklistTab: View {
             )
             .ignoresSafeArea()
 
+            // Decorative banners always rendered at full height
+            VStack {
+                HStack {
+                    Rectangle()
+                        .fill(
+                            LinearGradient(
+                                colors: [Color.blue.opacity(0.5), Color.purple.opacity(0.4)],
+                                startPoint: .leading,
+                                endPoint: .trailing
+                            )
+                        )
+                        .frame(width: UIScreen.main.bounds.width * 0.75, height: 130)
+                        .clipShape(
+                            .rect(
+                                topLeadingRadius: 0,
+                                bottomLeadingRadius: 0,
+                                bottomTrailingRadius: 80,
+                                topTrailingRadius: 0
+                            )
+                        )
+                        .overlay(
+                            Text("My Checklist")
+                                .font(.title2)
+                                .fontWeight(.semibold)
+                                .foregroundColor(.white)
+                                .padding(.leading, 20),
+                            alignment: .leading
+                        )
+                    Spacer()
+                }
+                .ignoresSafeArea()
+
+                Spacer()
+
+                HStack {
+                    Spacer()
+                    Rectangle()
+                        .fill(
+                            LinearGradient(
+                                colors: [Color.purple.opacity(0.4), Color.blue.opacity(0.5)],
+                                startPoint: .leading,
+                                endPoint: .trailing
+                            )
+                        )
+                        .frame(width: UIScreen.main.bounds.width * 0.75, height: 130)
+                        .clipShape(
+                            .rect(
+                                topLeadingRadius: 80,
+                                bottomLeadingRadius: 0,
+                                bottomTrailingRadius: 0,
+                                topTrailingRadius: 0
+                            )
+                        )
+                }
+                .ignoresSafeArea()
+            }
+
             VStack {
                 ZStack {
                     if let id = selectedTripID,
@@ -79,12 +136,29 @@ struct TripChecklistTab: View {
                         ChecklistView(trips: $trips, tripIndex: index)
                             .id(id)
                     } else {
-                        Text("Select a trip to see its checklist")
-                            .foregroundColor(.secondary)
-                            .italic()
-                            .padding()
-                            .frame(maxWidth: .infinity, maxHeight: .infinity)
-                            .multilineTextAlignment(.center)
+                        VStack(spacing: 12) {
+                            Spacer().frame(height: 100)
+                            VStack(spacing: 10) {
+                                Image(systemName: "checkmark.circle")
+                                    .font(.system(size: 40))
+                                    .foregroundColor(.secondary)
+
+                                Text("No trips planned yet")
+                                    .font(.headline)
+
+                                Text("Add a trip to manage your checklist")
+                                    .font(.subheadline)
+                                    .foregroundColor(.secondary)
+                                    .multilineTextAlignment(.center)
+                            }
+                            .frame(maxWidth: .infinity)
+                            .padding(.vertical, 32)
+                            .background(Color(.systemBackground).opacity(0.85))
+                            .cornerRadius(30)
+                            .padding(.horizontal, 30)
+
+                            Spacer()
+                        }
                     }
                 }
 
@@ -148,11 +222,12 @@ struct TripChecklistTab: View {
     }
 }
 
+
 // States variables for checklist and displays tabs
 struct ChecklistView: View {
     @Binding var trips: [Trip]
     let tripIndex: Int
- 
+
     // Copy of the checklist that gets edited, gets saved back to binding.
     @State private var localItems: [CheckListItem] = []
     @State private var newItemText = ""
@@ -171,70 +246,7 @@ struct ChecklistView: View {
 
     var body: some View {
         ZStack {
-            LinearGradient(
-                colors: [Color.blue.opacity(0.3), Color.purple.opacity(0.3)],
-                startPoint: .topLeading,
-                endPoint: .bottomTrailing
-            )
-            .ignoresSafeArea()
-
-            // Decorative banner shape, draws two gradient rectangles
-            VStack {
-                HStack {
-                    Rectangle()
-                        .fill(
-                            LinearGradient(
-                                colors: [Color.blue.opacity(0.5), Color.purple.opacity(0.4)],
-                                startPoint: .leading,
-                                endPoint: .trailing
-                            )
-                        )
-                        .frame(width: UIScreen.main.bounds.width * 0.75, height: 130)
-                        .clipShape(
-                            .rect(
-                                topLeadingRadius: 0,
-                                bottomLeadingRadius: 0,
-                                bottomTrailingRadius: 80,
-                                topTrailingRadius: 0
-                            )
-                        )
-                        .overlay(
-                            Text("My Checklist")
-                                .font(.title2)
-                                .fontWeight(.semibold)
-                                .foregroundColor(.white)
-                                .padding(.leading, 20),
-                            alignment: .leading
-                        )
-                    Spacer()
-                }
-                .ignoresSafeArea()
-
-                Spacer()
-
-                // Bottom mirrored shape
-                HStack {
-                    Spacer()
-                    Rectangle()
-                        .fill(
-                            LinearGradient(
-                                colors: [Color.purple.opacity(0.4), Color.blue.opacity(0.5)],
-                                startPoint: .leading,
-                                endPoint: .trailing
-                            )
-                        )
-                        .frame(width: UIScreen.main.bounds.width * 0.75, height: 130)
-                        .clipShape(
-                            .rect(
-                                topLeadingRadius: 80,
-                                bottomLeadingRadius: 0,
-                                bottomTrailingRadius: 0,
-                                topTrailingRadius: 0
-                            )
-                        )
-                }
-                .ignoresSafeArea()
-            }
+            
 
             // Main content
             VStack(spacing: 12) {
