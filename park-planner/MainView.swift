@@ -9,23 +9,50 @@ import SwiftUI
 import UserNotifications
 
 func scheduleTripNotification(for trip: Trip) {
-    let content = UNMutableNotificationContent()
-    content.title = "Your trip starts today! ✈️"
-    content.body = "\(trip.name) to \(trip.locationName) begins today. Have a great trip!"
-    content.sound = .default
+    let center = UNUserNotificationCenter.current()
 
-    var dateComponents = Calendar.current.dateComponents([.year, .month, .day], from: trip.startDate)
-    dateComponents.hour = 8
-    dateComponents.minute = 0
+    // --- 1 week before ---
+    let weekBefore = Calendar.current.date(byAdding: .day, value: -7, to: trip.startDate)!
+    var weekComponents = Calendar.current.dateComponents([.year, .month, .day], from: weekBefore)
+    weekComponents.hour = 9
+    weekComponents.minute = 0
 
-    let trigger = UNTimeIntervalNotificationTrigger(timeInterval: 7, repeats: false)
-    let request = UNNotificationRequest(identifier: trip.id.uuidString, content: content, trigger: trigger)
+    let weekContent = UNMutableNotificationContent()
+    weekContent.title = "Trip coming up! 🗓️"
+    weekContent.body = "\(trip.name) to \(trip.locationName) is one week away. Time to start packing!"
+    weekContent.sound = .default
 
-    UNUserNotificationCenter.current().add(request)
+    let weekTrigger = UNCalendarNotificationTrigger(dateMatching: weekComponents, repeats: false)
+    let weekRequest = UNNotificationRequest(identifier: "\(trip.id.uuidString)-week", content: weekContent, trigger: weekTrigger)
+    center.add(weekRequest)
+
+    // --- Day of ---
+    var dayComponents = Calendar.current.dateComponents([.year, .month, .day], from: trip.startDate)
+    dayComponents.hour = 8
+    dayComponents.minute = 0
+
+    let dayContent = UNMutableNotificationContent()
+    dayContent.title = "Your trip starts today! ✈️"
+    dayContent.body = "\(trip.name) to \(trip.locationName) begins today. Have a great trip!"
+    dayContent.sound = .default
+
+    let dayTrigger = UNCalendarNotificationTrigger(dateMatching: dayComponents, repeats: false)
+    let dayRequest = UNNotificationRequest(identifier: "\(trip.id.uuidString)-day", content: dayContent, trigger: dayTrigger)
+    center.add(dayRequest)
 }
 
 func cancelTripNotification(for trip: Trip) {
-    UNUserNotificationCenter.current().removePendingNotificationRequests(withIdentifiers: [trip.id.uuidString])
+    UNUserNotificationCenter.current().removePendingNotificationRequests(
+        withIdentifiers: ["\(trip.id.uuidString)-week", "\(trip.id.uuidString)-day"]
+    )
+}
+
+class NotificationDelegate: NSObject, UNUserNotificationCenterDelegate {
+    func userNotificationCenter(_ center: UNUserNotificationCenter,
+                                willPresent notification: UNNotification,
+                                withCompletionHandler completionHandler: @escaping (UNNotificationPresentationOptions) -> Void) {
+        completionHandler([.banner, .sound])
+    }
 }
 
 struct MainView: View {
@@ -33,6 +60,7 @@ struct MainView: View {
     @State private var selectedTrip: UUID?
     @State private var checklistItems: [CheckListItem] = []
     @State private var showHelper = false
+    @State private var notificationDelegate = NotificationDelegate()
 
     var currentTrip: Trip? {
         trips.first(where: { $0.id == selectedTrip })
@@ -147,6 +175,7 @@ struct MainView: View {
                     .tabItem { Label("Checklist", systemImage: "checkmark.circle") }
             }
             .onAppear {
+                UNUserNotificationCenter.current().delegate = notificationDelegate
                 UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .sound, .badge]) { granted, _ in
                     if granted {
                         for trip in trips {

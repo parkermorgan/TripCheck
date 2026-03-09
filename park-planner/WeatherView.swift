@@ -127,10 +127,25 @@ struct WeatherView: View {
                                 .padding(.vertical, 10)
                                 .frame(width: 180)
                                 .background(
-                                    Capsule()
-                                        .fill(selectedTripID == trip.id
-                                              ? Color.blue.opacity(0.35)
-                                              : Color.white.opacity(0.85))
+                                    ZStack {
+                                        // Gradient base
+                                        Capsule()
+                                            .fill(LinearGradient(
+                                                colors: [Color.blue.opacity(0.4), Color.purple.opacity(0.4)],
+                                                startPoint: .leading,
+                                                endPoint: .trailing
+                                            ))
+                                        // Frosted glass on top
+                                        Capsule()
+                                            .fill(.ultraThinMaterial)
+                                        // Extra tint + border when selected
+                                        if selectedTripID == trip.id {
+                                            Capsule()
+                                                .fill(Color.white.opacity(0.1))
+                                            Capsule()
+                                                .strokeBorder(Color.white.opacity(0.4), lineWidth: 1)
+                                        }
+                                    }
                                 )
                                 .onTapGesture {
                                     selectedTripID = trip.id
@@ -206,7 +221,23 @@ struct WeatherView: View {
                                         }
                                         .padding(.horizontal, 20)
                                         .padding(.vertical, 8)
-                                        .background(index % 2 == 0 ? Color.white : Color.blue.opacity(0.20))
+                                        .background(
+                                            ZStack {
+                                                if index % 2 != 0 {
+                                                    Capsule()
+                                                        .fill(LinearGradient(
+                                                            colors: [Color.blue.opacity(0.4), Color.purple.opacity(0.4)],
+                                                            startPoint: .leading,
+                                                            endPoint: .trailing
+                                                        ))
+                                                    Capsule()
+                                                        .fill(.ultraThinMaterial)
+                                                } else {
+                                                    Capsule()
+                                                        .fill(Color.white)
+                                                }
+                                            }
+                                        )
                                         .cornerRadius(30)
                                     }
                                 }
@@ -263,7 +294,23 @@ struct WeatherView: View {
                                             }
                                             .padding(.horizontal, 20)
                                             .padding(.vertical, 8)
-                                            .background(index % 2 == 0 ? Color.white : Color.blue.opacity(0.20))
+                                            .background(
+                                                ZStack {
+                                                    if index % 2 != 0 {
+                                                        Capsule()
+                                                            .fill(LinearGradient(
+                                                                colors: [Color.blue.opacity(0.4), Color.purple.opacity(0.4)],
+                                                                startPoint: .leading,
+                                                                endPoint: .trailing
+                                                            ))
+                                                        Capsule()
+                                                            .fill(.ultraThinMaterial)
+                                                    } else {
+                                                        Capsule()
+                                                            .fill(Color.white)
+                                                    }
+                                                }
+                                            )
                                             .cornerRadius(30)
                                         }
                                     }

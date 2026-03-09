@@ -47,7 +47,8 @@ struct Trip: Identifiable, Equatable, Codable {
         lhs.name == rhs.name &&
         lhs.locationName == rhs.locationName &&
         lhs.startDate == rhs.startDate &&
-        lhs.endDate == rhs.endDate
+        lhs.endDate == rhs.endDate &&
+        lhs.checklist == rhs.checklist
     }
 
     enum CodingKeys: String, CodingKey {

@@ -37,7 +37,6 @@ struct HelperView: View {
                 messages: Array(messages),
                 trips: trips
             ) { toolCall in
-                // Handle tool calls on main thread
                 return handleToolCall(toolCall)
             }
             chatMessages.append(.init(text: response, sender: .bot))
@@ -48,7 +47,6 @@ struct HelperView: View {
         isLoading = false
     }
 
-    // Executes tool calls and returns a result string for Claude
     func handleToolCall(_ toolCall: ToolCallResult) -> String {
         switch toolCall {
 
@@ -79,7 +77,6 @@ struct HelperView: View {
                 }
                 return "Successfully added '\(itemTitle)' to the \(category) checklist for \(trips[index].name)."
             } else {
-                // Try fuzzy match
                 if let index = trips.firstIndex(where: { $0.name.lowercased().contains(tripName.lowercased()) }) {
                     let newItem = CheckListItem(title: itemTitle, isCompleted: false, category: category)
                     DispatchQueue.main.async {
@@ -90,21 +87,36 @@ struct HelperView: View {
                 }
                 return "Could not find a trip named '\(tripName)'. Available trips: \(trips.map { $0.name }.joined(separator: ", "))"
             }
-        
-        case .createTrip(let tripName, let location, let startDate, let endDate):
-            let newTrip = Trip(
-                name: tripName,
-                locationName: location,
-                coordinate: CLLocationCoordinate2D(latitude: 0, longitude: 0),
-                startDate: startDate,
-                endDate: endDate,
-                checklist: []
-            )
-            DispatchQueue.main.async {
-                trips.append(newTrip)
-                saveTrips(trips)
+
+        case .createTrip(let tripName, let location, let startDate, let endDate, let useDefaultChecklist):
+            let geocoder = CLGeocoder()
+            geocoder.geocodeAddressString(location) { placemarks, error in
+                let coordinate: CLLocationCoordinate2D
+                let resolvedName: String
+
+                if let placemark = placemarks?.first, let loc = placemark.location {
+                    coordinate = loc.coordinate
+                    resolvedName = placemark.locality ?? placemark.name ?? location
+                } else {
+                    coordinate = CLLocationCoordinate2D(latitude: 0, longitude: 0)
+                    resolvedName = location
+                }
+
+                let newTrip = Trip(
+                    name: tripName,
+                    locationName: resolvedName,
+                    coordinate: coordinate,
+                    startDate: startDate,
+                    endDate: endDate,
+                    checklist: useDefaultChecklist ? defaultChecklistItems : []
+                )
+                DispatchQueue.main.async {
+                    trips.append(newTrip)
+                    saveTrips(trips)
+                }
             }
-            return "Successfully created trip '\(tripName)' with location '\(location)', starting on \(startDate) and ending on \(endDate)."
+            return "Successfully created trip '\(tripName)' to \(location)\(useDefaultChecklist ? " with default checklist" : "")."
+
         case .unknown:
             return "Unknown tool call."
         }
@@ -170,10 +182,11 @@ struct HelperView: View {
                         )
                     Spacer()
                     Button {
-                        chatMessages = []
-                        UserDefaults.standard.removeObject(forKey: "chatHistory")
+                        chatMessages = [
+                            .init(text: "Hey there! ✈️ I'm your TripCheck Assistant. Ask me anything about planning your trip or using the app!", sender: .bot)
+                        ]
                     } label: {
-                        Image(systemName: "trash")
+                        Text("Clear")
                             .foregroundColor(.white)
                             .padding(.trailing, 16)
                     }
@@ -181,44 +194,63 @@ struct HelperView: View {
                 .padding(.bottom, 12)
 
                 // Messages
-                ScrollView {
-                    LazyVStack(spacing: 12) {
-                        ForEach(chatMessages) { message in
-                            HStack {
-                                if message.sender == .user { Spacer() }
-                                Text(message.text)
-                                    .padding(.horizontal, 16)
-                                    .padding(.vertical, 10)
-                                    .background(
-                                        message.sender == .user
-                                        ? AnyShapeStyle(LinearGradient(
-                                            colors: [Color.blue.opacity(0.7), Color.purple.opacity(0.7)],
-                                            startPoint: .leading,
-                                            endPoint: .trailing
-                                        ))
-                                        : AnyShapeStyle(Color(.systemBackground).opacity(0.85))
-                                    )
-                                    .foregroundColor(message.sender == .user ? .white : .primary)
-                                    .cornerRadius(20)
-                                    .frame(maxWidth: UIScreen.main.bounds.width * 0.7, alignment: message.sender == .user ? .trailing : .leading)
-                                if message.sender == .bot { Spacer() }
+                ScrollViewReader { proxy in
+                    ScrollView {
+                        LazyVStack(spacing: 12) {
+                            ForEach(chatMessages) { message in
+                                HStack {
+                                    if message.sender == .user { Spacer() }
+                                    Text(message.text)
+                                        .padding(.horizontal, 16)
+                                        .padding(.vertical, 10)
+                                        .background(
+                                            message.sender == .user
+                                            ? AnyShapeStyle(LinearGradient(
+                                                colors: [Color.blue.opacity(0.7), Color.purple.opacity(0.7)],
+                                                startPoint: .leading,
+                                                endPoint: .trailing
+                                            ))
+                                            : AnyShapeStyle(Color(.systemBackground).opacity(0.85))
+                                        )
+                                        .foregroundColor(message.sender == .user ? .white : .primary)
+                                        .cornerRadius(20)
+                                        .frame(maxWidth: UIScreen.main.bounds.width * 0.7, alignment: message.sender == .user ? .trailing : .leading)
+                                    if message.sender == .bot { Spacer() }
+                                }
+                                .padding(.horizontal, 16)
+                                .id(message.id)
                             }
-                            .padding(.horizontal, 16)
-                        }
 
-                        if isLoading {
-                            HStack {
-                                ProgressView()
-                                    .padding(.horizontal, 16)
-                                    .padding(.vertical, 10)
-                                    .background(Color(.systemBackground).opacity(0.85))
-                                    .cornerRadius(20)
-                                Spacer()
+                            if isLoading {
+                                HStack {
+                                    ProgressView()
+                                        .padding(.horizontal, 16)
+                                        .padding(.vertical, 10)
+                                        .background(Color(.systemBackground).opacity(0.85))
+                                        .cornerRadius(20)
+                                    Spacer()
+                                }
+                                .padding(.horizontal, 16)
+                                .id("loading")
                             }
-                            .padding(.horizontal, 16)
+                        }
+                        .padding(.vertical, 8)
+                    }
+                    .onChange(of: chatMessages) {
+                        withAnimation {
+                            proxy.scrollTo(chatMessages.last?.id, anchor: .bottom)
                         }
                     }
-                    .padding(.vertical, 8)
+                    .onChange(of: isLoading) {
+                        if isLoading {
+                            withAnimation {
+                                proxy.scrollTo("loading", anchor: .bottom)
+                            }
+                        }
+                    }
+                    .onAppear {
+                        proxy.scrollTo(chatMessages.last?.id, anchor: .bottom)
+                    }
                 }
 
                 // Input bar

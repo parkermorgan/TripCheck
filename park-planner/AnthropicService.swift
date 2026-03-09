@@ -120,7 +120,7 @@ struct APIResponse: Decodable {
 enum ToolCallResult {
     case addChecklistItem(tripName: String, itemTitle: String, category: String)
     case getTrips
-    case createTrip(tripName: String, location: String, startDate: Date, endDate: Date)
+    case createTrip(tripName: String, location: String, startDate: Date, endDate: Date, useDefaultChecklist: Bool)
     case unknown
 }
 
@@ -140,7 +140,7 @@ struct AnthropicService {
     let tools: [ToolDefinition] = [
         ToolDefinition(
             name: "create_trip",
-            description: "Add a new trip with a name, location, and date.",
+            description: "Add a new trip with a name, location, and date. IMPORTANT: Before calling this tool, you MUST ask the user if they want the default checklist items added to the trip. Wait for their response before proceeding.",
             input_schema: ToolInputSchema(
                 type: "object",
                 properties: [
@@ -159,9 +159,14 @@ struct AnthropicService {
                     "end_date": ToolProperty(
                         type: "string",
                         description: "The end date of the trip in YYYY-MM-DD format"
+                    ),
+                    "use_default_checklist": ToolProperty(
+                        type: "string",
+                        description: "Whether to add the default checklist items to the trip. Ask the user if they want this before creating. Use 'yes' or 'no'.",
+                        enumValues: ["yes", "no"]
                     )
                 ],
-                required: ["trip_name", "location", "start_date", "end_date"]
+                required: ["trip_name", "location", "start_date", "end_date", "use_default_checklist"]
             )
         ),
         ToolDefinition(
@@ -246,7 +251,7 @@ struct AnthropicService {
         let body = RequestBody(
             model: "claude-sonnet-4-20250514",
             max_tokens: 1024,
-            system: "You are a helpful assistant for TripCheck, a trip planning app. Help users plan trips, manage their checklists, and answer questions about the app. Be friendly and concise. When users ask to add items or get trip info, use the available tools.",
+            system: "You are a helpful assistant for TripCheck, a trip planning app. Help users plan trips, manage their checklists, and answer questions about the app. Be friendly and concise. When users ask to add items or get trip info, use the available tools. Today's date is \(formattedToday()). Always use the current year when interpreting dates unless the user specifies otherwise.",
             tools: tools,
             messages: messages
         )
@@ -261,6 +266,12 @@ struct AnthropicService {
         let (data, _) = try await URLSession.shared.data(for: request)
         print(String(data: data, encoding: .utf8) ?? "no data")
         return try JSONDecoder().decode(APIResponse.self, from: data)
+    }
+    
+    private func formattedToday() -> String {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "yyyy-MM-dd"
+        return formatter.string(from: Date())
     }
 
     private func parseToolCall(name: String, input: [String: String]) -> ToolCallResult {
@@ -281,13 +292,14 @@ struct AnthropicService {
                   let endDateString = input["end_date"] else {
                 return .unknown
             }
+            let useDefaultChecklist = input["use_default_checklist"] == "yes"
             let formatter = DateFormatter()
             formatter.dateFormat = "yyyy-MM-dd"
             guard let startDate = formatter.date(from: startDateString),
                   let endDate = formatter.date(from: endDateString) else {
                 return .unknown
             }
-            return .createTrip(tripName: tripName, location: location, startDate: startDate, endDate: endDate)
+            return .createTrip(tripName: tripName, location: location, startDate: startDate, endDate: endDate, useDefaultChecklist: useDefaultChecklist)
         default:
             return .unknown
         }

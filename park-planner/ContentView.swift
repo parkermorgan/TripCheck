@@ -21,7 +21,6 @@ struct ContentView: View {
     @State private var buttonsOpacity: CGFloat = 0
     @State private var heroOffset: CGFloat = 50
     @State private var heroOpacity: CGFloat = 0
-    @State private var pulseAnimation: Bool = false
 
     enum ResetTarget {
         case chat, trips, both
@@ -51,7 +50,11 @@ struct ContentView: View {
     }
 
     var nextTrip: Trip? {
-        trips
+        if let selected = selectedTrip,
+           let trip = trips.first(where: { $0.id == selected }) {
+            return trip
+        }
+        return trips
             .filter { $0.startDate >= Calendar.current.startOfDay(for: Date()) }
             .sorted { $0.startDate < $1.startDate }
             .first ?? trips.sorted { $0.startDate < $1.startDate }.last
@@ -72,6 +75,7 @@ struct ContentView: View {
     var body: some View {
         NavigationStack {
             ZStack {
+                // Background
                 LinearGradient(
                     colors: [Color.blue.opacity(0.3), Color.purple.opacity(0.3)],
                     startPoint: .topLeading,
@@ -79,29 +83,8 @@ struct ContentView: View {
                 )
                 .ignoresSafeArea()
 
-                // Banners
+                // Bottom banner — non-interactive
                 VStack {
-                    HStack {
-                        Rectangle()
-                            .fill(LinearGradient(
-                                colors: [Color.blue.opacity(0.5), Color.purple.opacity(0.4)],
-                                startPoint: .leading, endPoint: .trailing
-                            ))
-                            .frame(width: UIScreen.main.bounds.width * 0.75, height: 130)
-                            .clipShape(.rect(topLeadingRadius: 0, bottomLeadingRadius: 0, bottomTrailingRadius: 80, topTrailingRadius: 0))
-                            .overlay(
-                                Text("TripCheck")
-                                    .font(.title2).fontWeight(.semibold).foregroundColor(.white).padding(.leading, 20),
-                                alignment: .leading
-                            )
-                        Spacer()
-                        Button { showResetSheet = true } label: {
-                            Image(systemName: "arrow.counterclockwise")
-                                .font(.title3).foregroundColor(.secondary)
-                                .padding(.trailing, 20).padding(.top, 20)
-                        }
-                    }
-                    .ignoresSafeArea()
                     Spacer()
                     HStack {
                         Spacer()
@@ -113,20 +96,19 @@ struct ContentView: View {
                             .frame(width: UIScreen.main.bounds.width * 0.75, height: 130)
                             .clipShape(.rect(topLeadingRadius: 80, bottomLeadingRadius: 0, bottomTrailingRadius: 0, topTrailingRadius: 0))
                     }
-                    .ignoresSafeArea()
                 }
+                .ignoresSafeArea()
+                .allowsHitTesting(false)
 
-                // Content
+                // Scroll content
                 ScrollView(showsIndicators: false) {
                     VStack(spacing: 24) {
-                        Spacer().frame(height: 100)
-
+                        Spacer().frame(height: 130)
                         if trips.isEmpty {
                             emptyStateView
                         } else {
                             tripsStateView
                         }
-
                         Text("Created by Parker Morgan")
                             .foregroundColor(.secondary)
                             .italic()
@@ -134,6 +116,38 @@ struct ContentView: View {
                             .padding(.bottom, 25)
                             .padding(.top, 8)
                     }
+                }
+
+                // Top banner + button — rendered last so it's on top
+                VStack {
+                    ZStack(alignment: .topTrailing) {
+                        HStack {
+                            Rectangle()
+                                .fill(LinearGradient(
+                                    colors: [Color.blue.opacity(0.5), Color.purple.opacity(0.4)],
+                                    startPoint: .leading, endPoint: .trailing
+                                ))
+                                .frame(width: UIScreen.main.bounds.width * 0.75, height: 130)
+                                .clipShape(.rect(topLeadingRadius: 0, bottomLeadingRadius: 0, bottomTrailingRadius: 80, topTrailingRadius: 0))
+                                .overlay(
+                                    Text("TripCheck")
+                                        .font(.title2).fontWeight(.semibold).foregroundColor(.white).padding(.leading, 20),
+                                    alignment: .leading
+                                )
+                                .ignoresSafeArea(edges: .top)
+                            Spacer()
+                        }
+                        Button {
+                            showResetSheet = true
+                        } label: {
+                            Image(systemName: "arrow.counterclockwise")
+                                .font(.title3)
+                                .foregroundColor(.secondary)
+                                .padding(16)
+                        }
+                    }
+                   
+                    Spacer()
                 }
             }
             .alert("Trip Selected", isPresented: $showTripAlert) {
@@ -143,12 +157,12 @@ struct ContentView: View {
                 Button("Reset", role: .destructive) { performReset() }
                 Button("Cancel", role: .cancel) {}
             } message: { Text(resetTarget.message) }
-        }
-        .confirmationDialog("Reset App Data", isPresented: $showResetSheet, titleVisibility: .visible) {
-            Button("Clear Chat History", role: .destructive) { resetTarget = .chat; showResetConfirm = true }
-            Button("Clear All Trips", role: .destructive) { resetTarget = .trips; showResetConfirm = true }
-            Button("Clear Everything", role: .destructive) { resetTarget = .both; showResetConfirm = true }
-            Button("Cancel", role: .cancel) {}
+            .confirmationDialog("Reset App Data", isPresented: $showResetSheet, titleVisibility: .visible) {
+                Button("Clear Chat History", role: .destructive) { resetTarget = .chat; showResetConfirm = true }
+                Button("Clear All Trips", role: .destructive) { resetTarget = .trips; showResetConfirm = true }
+                Button("Clear Everything", role: .destructive) { resetTarget = .both; showResetConfirm = true }
+                Button("Cancel", role: .cancel) {}
+            }
         }
     }
 
@@ -156,18 +170,13 @@ struct ContentView: View {
 
     var emptyStateView: some View {
         VStack(spacing: 28) {
-            // Pulsing logo
             ZStack {
                 Circle()
                     .fill(LinearGradient(
                         colors: [Color.blue.opacity(0.12), Color.purple.opacity(0.12)],
                         startPoint: .topLeading, endPoint: .bottomTrailing
                     ))
-                    .frame(
-                        width: pulseAnimation ? 185 : 168,
-                        height: pulseAnimation ? 185 : 168
-                    )
-                    .animation(.easeInOut(duration: 2).repeatForever(autoreverses: true), value: pulseAnimation)
+                    .frame(width: 180, height: 180)
 
                 Image("TripCheck-logo")
                     .resizable()
@@ -179,7 +188,6 @@ struct ContentView: View {
                     .opacity(logoOpacity)
             }
 
-            // Intro text
             VStack(spacing: 8) {
                 Text("Welcome to TripCheck ✈️")
                     .font(.title2)
@@ -195,12 +203,10 @@ struct ContentView: View {
             .offset(y: titleOffset)
             .opacity(titleOpacity)
 
-            // Add trip button
             NavigationLink(destination: CreateTripView(trips: $trips, selectedTrip: $selectedTrip)) {
                 HStack {
                     Image(systemName: "plus.circle.fill")
-                    Text("Add Your First Trip")
-                        .font(.headline)
+                    Text("Add Your First Trip").font(.headline)
                 }
                 .foregroundColor(.white)
                 .frame(maxWidth: .infinity)
@@ -214,20 +220,19 @@ struct ContentView: View {
             .padding(.horizontal, 30)
             .offset(y: buttonsOffset)
             .opacity(buttonsOpacity)
-        }
-        .onAppear {
-            pulseAnimation = true
-            withAnimation(.spring(response: 0.6, dampingFraction: 0.7).delay(0.1)) {
-                logoScale = 1.0
-                logoOpacity = 1.0
-            }
-            withAnimation(.spring(response: 0.6, dampingFraction: 0.8).delay(0.25)) {
-                titleOffset = 0
-                titleOpacity = 1.0
-            }
-            withAnimation(.spring(response: 0.6, dampingFraction: 0.8).delay(0.4)) {
-                buttonsOffset = 0
-                buttonsOpacity = 1.0
+            .onAppear {
+                withAnimation(.spring(response: 0.7, dampingFraction: 0.8)) {
+                    logoScale = 1.0
+                    logoOpacity = 1.0
+                }
+                withAnimation(.spring(response: 0.6, dampingFraction: 0.8).delay(0.2)) {
+                    titleOffset = 0
+                    titleOpacity = 1.0
+                }
+                withAnimation(.spring(response: 0.6, dampingFraction: 0.8).delay(0.4)) {
+                    buttonsOffset = 0
+                    buttonsOpacity = 1.0
+                }
             }
         }
     }
@@ -237,7 +242,6 @@ struct ContentView: View {
     var tripsStateView: some View {
         VStack(spacing: 20) {
 
-            // Hero card
             if let trip = nextTrip {
                 VStack(alignment: .leading, spacing: 16) {
 
@@ -265,7 +269,6 @@ struct ContentView: View {
 
                         Spacer()
 
-                        // Days countdown badge
                         VStack(spacing: 0) {
                             Text("\(daysUntilNextTrip)")
                                 .font(.system(size: 40, weight: .bold, design: .rounded))
@@ -279,7 +282,6 @@ struct ContentView: View {
                         }
                     }
 
-                    // Checklist progress bar
                     if !trip.checklist.isEmpty {
                         VStack(alignment: .leading, spacing: 6) {
                             HStack {
@@ -291,7 +293,7 @@ struct ContentView: View {
                                 Text("\(completed)/\(trip.checklist.count)")
                                     .font(.caption)
                                     .fontWeight(.semibold)
-                                    .foregroundColor(.blue)
+                                    .foregroundColor(checklistProgress == 1.0 ? .green : .blue)
                             }
                             GeometryReader { geo in
                                 ZStack(alignment: .leading) {
@@ -300,7 +302,9 @@ struct ContentView: View {
                                         .frame(height: 8)
                                     RoundedRectangle(cornerRadius: 4)
                                         .fill(LinearGradient(
-                                            colors: [Color.blue.opacity(0.7), Color.purple.opacity(0.7)],
+                                            colors: checklistProgress == 1.0
+                                                ? [Color.green.opacity(0.7), Color.green.opacity(0.5)]
+                                                : [Color.blue.opacity(0.7), Color.purple.opacity(0.7)],
                                             startPoint: .leading, endPoint: .trailing
                                         ))
                                         .frame(width: geo.size.width * checklistProgress, height: 8)
@@ -311,7 +315,6 @@ struct ContentView: View {
                         }
                     }
 
-                    // Date range
                     HStack(spacing: 4) {
                         Image(systemName: "calendar")
                             .foregroundColor(.secondary)
@@ -341,7 +344,6 @@ struct ContentView: View {
                 }
             }
 
-            // Buttons
             VStack(spacing: 12) {
                 NavigationLink(destination: CreateTripView(trips: $trips, selectedTrip: $selectedTrip)) {
                     HStack {
@@ -387,7 +389,6 @@ struct ContentView: View {
                 }
             }
 
-            // Trip list
             if showTrips {
                 VStack(alignment: .leading, spacing: 8) {
                     Text("Your Trips")
