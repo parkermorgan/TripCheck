@@ -16,11 +16,17 @@ struct CreateTripView: View {
     @State private var showAlert = false
     @State private var isSuccess = false
     @Environment(\.dismiss) var dismiss
+    @Environment(\.colorScheme) var colorScheme
 
     var existingTrip: Trip? = nil
 
+    var cardBackground: Color {
+        colorScheme == .dark ? Color(.systemGray6) : Color.white
+    }
+
     var body: some View {
         ZStack {
+            // Background
             LinearGradient(
                 colors: [Color.blue.opacity(0.3), Color.purple.opacity(0.3)],
                 startPoint: .topLeading,
@@ -28,62 +34,46 @@ struct CreateTripView: View {
             )
             .ignoresSafeArea()
 
+            // Top banner
             VStack {
                 HStack {
                     Rectangle()
-                        .fill(
-                            LinearGradient(
-                                colors: [Color.blue.opacity(0.5), Color.purple.opacity(0.4)],
-                                startPoint: .leading,
-                                endPoint: .trailing
-                            )
-                        )
+                        .fill(LinearGradient(
+                            colors: [Color.blue.opacity(0.5), Color.purple.opacity(0.4)],
+                            startPoint: .leading, endPoint: .trailing
+                        ))
                         .frame(width: UIScreen.main.bounds.width * 0.75, height: 130)
-                        .clipShape(
-                            .rect(
-                                topLeadingRadius: 0,
-                                bottomLeadingRadius: 0,
-                                bottomTrailingRadius: 80,
-                                topTrailingRadius: 0
-                            )
-                        )
+                        .clipShape(.rect(topLeadingRadius: 0, bottomLeadingRadius: 0, bottomTrailingRadius: 80, topTrailingRadius: 0))
                         .overlay(
                             Text(existingTrip == nil ? "New Trip" : "Edit Trip")
-                                .font(.title2)
-                                .fontWeight(.semibold)
-                                .foregroundColor(.white)
-                                .padding(.leading, 20),
+                                .font(.title2).fontWeight(.semibold).foregroundColor(.white).padding(.leading, 20),
                             alignment: .leading
                         )
                     Spacer()
                 }
-                .ignoresSafeArea()
-
                 Spacer()
+            }
+            .ignoresSafeArea()
+            .allowsHitTesting(false)
 
+            // Bottom banner
+            VStack {
+                Spacer()
                 HStack {
                     Spacer()
                     Rectangle()
-                        .fill(
-                            LinearGradient(
-                                colors: [Color.purple.opacity(0.4), Color.blue.opacity(0.5)],
-                                startPoint: .leading,
-                                endPoint: .trailing
-                            )
-                        )
+                        .fill(LinearGradient(
+                            colors: [Color.purple.opacity(0.4), Color.blue.opacity(0.5)],
+                            startPoint: .leading, endPoint: .trailing
+                        ))
                         .frame(width: UIScreen.main.bounds.width * 0.75, height: 130)
-                        .clipShape(
-                            .rect(
-                                topLeadingRadius: 80,
-                                bottomLeadingRadius: 0,
-                                bottomTrailingRadius: 0,
-                                topTrailingRadius: 0
-                            )
-                        )
+                        .clipShape(.rect(topLeadingRadius: 80, bottomLeadingRadius: 0, bottomTrailingRadius: 0, topTrailingRadius: 0))
                 }
-                .ignoresSafeArea()
             }
+            .ignoresSafeArea()
+            .allowsHitTesting(false)
 
+            // Content
             VStack(spacing: 16) {
                 Spacer().frame(height: 100)
 
@@ -104,9 +94,9 @@ struct CreateTripView: View {
                                 }
                                 .padding(.horizontal, 20)
                                 .padding(.vertical, 14)
-                                .background(Color.white)
+                                .background(cardBackground)
                                 .cornerRadius(30)
-                                
+
                                 Button {
                                     showLocationPicker = true
                                 } label: {
@@ -127,7 +117,7 @@ struct CreateTripView: View {
                                 }
                                 .padding(.horizontal, 20)
                                 .padding(.vertical, 14)
-                                .background(Color.white)
+                                .background(cardBackground)
                                 .cornerRadius(30)
                                 .sheet(isPresented: $showLocationPicker) {
                                     LocationPickerView(selectedLocation: $selectedLocation)
@@ -153,7 +143,7 @@ struct CreateTripView: View {
                                 }
                                 .padding(.horizontal, 20)
                                 .padding(.vertical, 10)
-                                .background(Color.white)
+                                .background(cardBackground)
                                 .cornerRadius(30)
 
                                 HStack {
@@ -164,7 +154,7 @@ struct CreateTripView: View {
                                 }
                                 .padding(.horizontal, 20)
                                 .padding(.vertical, 10)
-                                .background(Color.white)
+                                .background(cardBackground)
                                 .cornerRadius(30)
                             }
                         }
@@ -208,15 +198,15 @@ struct CreateTripView: View {
                                     checklist: defaultChecklistItems
                                 )
                                 trips.append(newTrip)
-                                
+
                                 UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .sound, .badge]) { granted, _ in
-                                        if granted {
-                                            scheduleTripNotification(for: newTrip)
-                                            print("Notification scheduled for \(newTrip.name)")
-                                        } else {
-                                            print("Permission denied")
-                                        }
+                                    if granted {
+                                        scheduleTripNotification(for: newTrip)
+                                        print("Notification scheduled for \(newTrip.name)")
+                                    } else {
+                                        print("Permission denied")
                                     }
+                                }
                             }
 
                             alertMessage = existingTrip == nil ? "\(tripName) added successfully!" : "\(tripName) updated successfully!"
@@ -228,13 +218,10 @@ struct CreateTripView: View {
                                 .foregroundColor(.white)
                                 .frame(maxWidth: .infinity)
                                 .padding(.vertical, 16)
-                                .background(
-                                    LinearGradient(
-                                        colors: [Color.blue.opacity(0.7), Color.purple.opacity(0.7)],
-                                        startPoint: .leading,
-                                        endPoint: .trailing
-                                    )
-                                )
+                                .background(LinearGradient(
+                                    colors: [Color.blue.opacity(0.7), Color.purple.opacity(0.7)],
+                                    startPoint: .leading, endPoint: .trailing
+                                ))
                                 .cornerRadius(30)
                         }
                         .padding(.horizontal, 30)
@@ -262,20 +249,25 @@ struct CreateTripView: View {
     }
 }
 
-// Sample Preview (data not required).
 #Preview {
     CreateTripView(trips: .constant([]), selectedTrip: .constant(nil))
 }
 
 struct LocationPickerView: View {
     @Environment(\.dismiss) var dismiss
+    @Environment(\.colorScheme) var colorScheme
     @Binding var selectedLocation: MKMapItem?
 
     @State private var searchQuery = ""
     @State private var searchResults: [MKMapItem] = []
 
+    var cardBackground: Color {
+        colorScheme == .dark ? Color(.systemGray6) : Color.white
+    }
+
     var body: some View {
         ZStack {
+            // Background
             LinearGradient(
                 colors: [Color.blue.opacity(0.3), Color.purple.opacity(0.3)],
                 startPoint: .topLeading,
@@ -283,62 +275,46 @@ struct LocationPickerView: View {
             )
             .ignoresSafeArea()
 
+            // Top banner
             VStack {
                 HStack {
                     Rectangle()
-                        .fill(
-                            LinearGradient(
-                                colors: [Color.blue.opacity(0.5), Color.purple.opacity(0.4)],
-                                startPoint: .leading,
-                                endPoint: .trailing
-                            )
-                        )
+                        .fill(LinearGradient(
+                            colors: [Color.blue.opacity(0.5), Color.purple.opacity(0.4)],
+                            startPoint: .leading, endPoint: .trailing
+                        ))
                         .frame(width: UIScreen.main.bounds.width * 0.75, height: 130)
-                        .clipShape(
-                            .rect(
-                                topLeadingRadius: 0,
-                                bottomLeadingRadius: 0,
-                                bottomTrailingRadius: 80,
-                                topTrailingRadius: 0
-                            )
-                        )
+                        .clipShape(.rect(topLeadingRadius: 0, bottomLeadingRadius: 0, bottomTrailingRadius: 80, topTrailingRadius: 0))
                         .overlay(
                             Text("Pick a Location")
-                                .font(.title2)
-                                .fontWeight(.semibold)
-                                .foregroundColor(.white)
-                                .padding(.leading, 20),
+                                .font(.title2).fontWeight(.semibold).foregroundColor(.white).padding(.leading, 20),
                             alignment: .leading
                         )
                     Spacer()
                 }
-                .ignoresSafeArea()
-
                 Spacer()
+            }
+            .ignoresSafeArea()
+            .allowsHitTesting(false)
 
+            // Bottom banner
+            VStack {
+                Spacer()
                 HStack {
                     Spacer()
                     Rectangle()
-                        .fill(
-                            LinearGradient(
-                                colors: [Color.purple.opacity(0.4), Color.blue.opacity(0.5)],
-                                startPoint: .leading,
-                                endPoint: .trailing
-                            )
-                        )
+                        .fill(LinearGradient(
+                            colors: [Color.purple.opacity(0.4), Color.blue.opacity(0.5)],
+                            startPoint: .leading, endPoint: .trailing
+                        ))
                         .frame(width: UIScreen.main.bounds.width * 0.75, height: 130)
-                        .clipShape(
-                            .rect(
-                                topLeadingRadius: 80,
-                                bottomLeadingRadius: 0,
-                                bottomTrailingRadius: 0,
-                                topTrailingRadius: 0
-                            )
-                        )
+                        .clipShape(.rect(topLeadingRadius: 80, bottomLeadingRadius: 0, bottomTrailingRadius: 0, topTrailingRadius: 0))
                 }
-                .ignoresSafeArea()
             }
+            .ignoresSafeArea()
+            .allowsHitTesting(false)
 
+            // Content
             VStack(spacing: 12) {
                 Spacer().frame(height: 100)
 
@@ -352,7 +328,7 @@ struct LocationPickerView: View {
                 }
                 .padding(.horizontal, 20)
                 .padding(.vertical, 14)
-                .background(Color.white)
+                .background(cardBackground)
                 .cornerRadius(30)
                 .padding(.horizontal, 30)
 
@@ -383,7 +359,7 @@ struct LocationPickerView: View {
                                 }
                                 .padding(.horizontal, 20)
                                 .padding(.vertical, 12)
-                                .background(Color.white)
+                                .background(cardBackground)
                                 .cornerRadius(30)
                             }
                         }

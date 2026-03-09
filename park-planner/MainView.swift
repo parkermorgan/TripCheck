@@ -80,6 +80,7 @@ struct MainView: View {
                         .tabItem { Label("Countdown", systemImage: "calendar") }
                 } else {
                     ZStack {
+                        // Background
                         LinearGradient(
                             colors: [Color.blue.opacity(0.3), Color.purple.opacity(0.3)],
                             startPoint: .topLeading,
@@ -87,70 +88,54 @@ struct MainView: View {
                         )
                         .ignoresSafeArea()
 
+                        // Top banner
                         VStack {
                             HStack {
                                 Rectangle()
-                                    .fill(
-                                        LinearGradient(
-                                            colors: [Color.blue.opacity(0.5), Color.purple.opacity(0.4)],
-                                            startPoint: .leading,
-                                            endPoint: .trailing
-                                        )
-                                    )
+                                    .fill(LinearGradient(
+                                        colors: [Color.blue.opacity(0.5), Color.purple.opacity(0.4)],
+                                        startPoint: .leading, endPoint: .trailing
+                                    ))
                                     .frame(width: UIScreen.main.bounds.width * 0.75, height: 130)
-                                    .clipShape(
-                                        .rect(
-                                            topLeadingRadius: 0,
-                                            bottomLeadingRadius: 0,
-                                            bottomTrailingRadius: 80,
-                                            topTrailingRadius: 0
-                                        )
-                                    )
+                                    .clipShape(.rect(topLeadingRadius: 0, bottomLeadingRadius: 0, bottomTrailingRadius: 80, topTrailingRadius: 0))
                                     .overlay(
                                         Text("Countdown")
-                                            .font(.title2)
-                                            .fontWeight(.semibold)
-                                            .foregroundColor(.white)
-                                            .padding(.leading, 20),
+                                            .font(.title2).fontWeight(.semibold).foregroundColor(.white).padding(.leading, 20),
                                         alignment: .leading
                                     )
                                 Spacer()
                             }
-                            .ignoresSafeArea()
+                            Spacer()
+                        }
+                        .ignoresSafeArea()
+                        .allowsHitTesting(false)
+
+                        // Bottom banner
+                        VStack {
                             Spacer()
                             HStack {
                                 Spacer()
                                 Rectangle()
-                                    .fill(
-                                        LinearGradient(
-                                            colors: [Color.purple.opacity(0.4), Color.blue.opacity(0.5)],
-                                            startPoint: .leading,
-                                            endPoint: .trailing
-                                        )
-                                    )
+                                    .fill(LinearGradient(
+                                        colors: [Color.purple.opacity(0.4), Color.blue.opacity(0.5)],
+                                        startPoint: .leading, endPoint: .trailing
+                                    ))
                                     .frame(width: UIScreen.main.bounds.width * 0.75, height: 130)
-                                    .clipShape(
-                                        .rect(
-                                            topLeadingRadius: 80,
-                                            bottomLeadingRadius: 0,
-                                            bottomTrailingRadius: 0,
-                                            topTrailingRadius: 0
-                                        )
-                                    )
+                                    .clipShape(.rect(topLeadingRadius: 80, bottomLeadingRadius: 0, bottomTrailingRadius: 0, topTrailingRadius: 0))
                             }
-                            .ignoresSafeArea()
                         }
+                        .ignoresSafeArea()
+                        .allowsHitTesting(false)
 
+                        // Content
                         VStack(spacing: 12) {
                             Spacer().frame(height: 100)
                             VStack(spacing: 10) {
                                 Image(systemName: "calendar")
                                     .font(.system(size: 40))
                                     .foregroundColor(.secondary)
-
                                 Text("No trips planned yet")
                                     .font(.headline)
-
                                 Text("Add a trip to start the countdown")
                                     .font(.subheadline)
                                     .foregroundColor(.secondary)
@@ -158,10 +143,9 @@ struct MainView: View {
                             }
                             .frame(maxWidth: .infinity)
                             .padding(.vertical, 32)
-                            .background(Color(.systemBackground).opacity(0.85))
+                            .background(Color(.systemGray6).opacity(0.85))
                             .cornerRadius(30)
                             .padding(.horizontal, 30)
-
                             Spacer()
                         }
                     }
@@ -174,7 +158,11 @@ struct MainView: View {
                 TripChecklistTab(trips: $trips)
                     .tabItem { Label("Checklist", systemImage: "checkmark.circle") }
             }
+            .ignoresSafeArea(edges: .bottom)
             .onAppear {
+                if selectedTrip == nil, trips.count == 1 {
+                    selectedTrip = trips[0].id
+                }
                 UNUserNotificationCenter.current().delegate = notificationDelegate
                 UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .sound, .badge]) { granted, _ in
                     if granted {
@@ -185,6 +173,9 @@ struct MainView: View {
                 }
             }
             .onChange(of: trips) { updatedTrips in
+                if selectedTrip == nil, updatedTrips.count == 1 {
+                    selectedTrip = updatedTrips[0].id
+                }
                 saveTrips(updatedTrips)
 
                 let oldIDs = Set(trips.map { $0.id })

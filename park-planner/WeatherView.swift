@@ -19,7 +19,17 @@ struct WeatherView: View {
     @State private var tripForecast: [(date: String, max: String, min: String, weatherCode: Int)] = []
     @State private var tripForecastUnavailable: Bool = false
 
+    @Environment(\.colorScheme) var colorScheme
+
     let tabs = ["Current", "Trip Forecast"]
+
+    var cardBackground: Color {
+        colorScheme == .dark ? Color(.systemGray6) : Color.white.opacity(0.85)
+    }
+
+    var evenRowBackground: Color {
+        colorScheme == .dark ? Color(.systemGray5) : Color.white
+    }
 
     var selectedTrip: Trip? {
         trips.first(where: { $0.id == selectedTripID })
@@ -27,6 +37,7 @@ struct WeatherView: View {
 
     var body: some View {
         ZStack {
+            // Background
             LinearGradient(
                 colors: [Color.blue.opacity(0.3), Color.purple.opacity(0.3)],
                 startPoint: .topLeading,
@@ -34,73 +45,56 @@ struct WeatherView: View {
             )
             .ignoresSafeArea()
 
+            // Top banner
             VStack {
                 HStack {
                     Rectangle()
-                        .fill(
-                            LinearGradient(
-                                colors: [Color.blue.opacity(0.5), Color.purple.opacity(0.4)],
-                                startPoint: .leading,
-                                endPoint: .trailing
-                            )
-                        )
+                        .fill(LinearGradient(
+                            colors: [Color.blue.opacity(0.5), Color.purple.opacity(0.4)],
+                            startPoint: .leading, endPoint: .trailing
+                        ))
                         .frame(width: UIScreen.main.bounds.width * 0.75, height: 130)
-                        .clipShape(
-                            .rect(
-                                topLeadingRadius: 0,
-                                bottomLeadingRadius: 0,
-                                bottomTrailingRadius: 80,
-                                topTrailingRadius: 0
-                            )
-                        )
+                        .clipShape(.rect(topLeadingRadius: 0, bottomLeadingRadius: 0, bottomTrailingRadius: 80, topTrailingRadius: 0))
                         .overlay(
                             Text("Weather")
-                                .font(.title2)
-                                .fontWeight(.semibold)
-                                .foregroundColor(.white)
-                                .padding(.leading, 20),
+                                .font(.title2).fontWeight(.semibold).foregroundColor(.white).padding(.leading, 20),
                             alignment: .leading
                         )
                     Spacer()
                 }
-                .ignoresSafeArea()
-
                 Spacer()
+            }
+            .ignoresSafeArea()
+            .allowsHitTesting(false)
 
+            // Bottom banner
+            VStack {
+                Spacer()
                 HStack {
                     Spacer()
                     Rectangle()
-                        .fill(
-                            LinearGradient(
-                                colors: [Color.purple.opacity(0.4), Color.blue.opacity(0.5)],
-                                startPoint: .leading,
-                                endPoint: .trailing
-                            )
-                        )
+                        .fill(LinearGradient(
+                            colors: [Color.purple.opacity(0.4), Color.blue.opacity(0.5)],
+                            startPoint: .leading, endPoint: .trailing
+                        ))
                         .frame(width: UIScreen.main.bounds.width * 0.75, height: 130)
-                        .clipShape(
-                            .rect(
-                                topLeadingRadius: 80,
-                                bottomLeadingRadius: 0,
-                                bottomTrailingRadius: 0,
-                                topTrailingRadius: 0
-                            )
-                        )
+                        .clipShape(.rect(topLeadingRadius: 80, bottomLeadingRadius: 0, bottomTrailingRadius: 0, topTrailingRadius: 0))
                 }
-                .ignoresSafeArea()
             }
+            .ignoresSafeArea()
+            .allowsHitTesting(false)
 
+            // Content
             VStack(spacing: 12) {
                 Spacer().frame(height: 100)
+
                 if trips.isEmpty {
                     VStack(spacing: 10) {
                         Image(systemName: "sun.max")
                             .font(.system(size: 40))
                             .foregroundColor(.secondary)
-
                         Text("No trips planned yet")
                             .font(.headline)
-
                         Text("Add a trip to see its weather")
                             .font(.subheadline)
                             .foregroundColor(.secondary)
@@ -108,7 +102,7 @@ struct WeatherView: View {
                     }
                     .frame(maxWidth: .infinity)
                     .padding(.vertical, 32)
-                    .background(Color(.systemBackground).opacity(0.85))
+                    .background(cardBackground)
                     .cornerRadius(30)
                     .padding(.horizontal, 30)
 
@@ -128,28 +122,19 @@ struct WeatherView: View {
                                 .frame(width: 180)
                                 .background(
                                     ZStack {
-                                        // Gradient base
                                         Capsule()
                                             .fill(LinearGradient(
                                                 colors: [Color.blue.opacity(0.4), Color.purple.opacity(0.4)],
-                                                startPoint: .leading,
-                                                endPoint: .trailing
+                                                startPoint: .leading, endPoint: .trailing
                                             ))
-                                        // Frosted glass on top
-                                        Capsule()
-                                            .fill(.ultraThinMaterial)
-                                        // Extra tint + border when selected
+                                        Capsule().fill(.ultraThinMaterial)
                                         if selectedTripID == trip.id {
-                                            Capsule()
-                                                .fill(Color.white.opacity(0.1))
-                                            Capsule()
-                                                .strokeBorder(Color.white.opacity(0.4), lineWidth: 1)
+                                            Capsule().fill(Color.white.opacity(0.1))
+                                            Capsule().strokeBorder(Color.white.opacity(0.4), lineWidth: 1)
                                         }
                                     }
                                 )
-                                .onTapGesture {
-                                    selectedTripID = trip.id
-                                }
+                                .onTapGesture { selectedTripID = trip.id }
                             }
                         }
                         .padding(.horizontal, 30)
@@ -171,152 +156,71 @@ struct WeatherView: View {
                     .padding(.horizontal, 30)
 
                     if let trip = selectedTrip {
-                        if selectedTab == "Current" {
+                        ScrollView(showsIndicators: false) {
                             VStack(spacing: 10) {
-                                VStack(spacing: 4) {
-                                    Text(trip.locationName)
-                                        .font(.title3)
-                                        .fontWeight(.semibold)
-
-                                    Image(systemName: weatherIconName)
-                                        .font(.system(size: 36))
-                                        .foregroundColor(.primary)
-
-                                    Text(temperatureText)
-                                        .font(.system(size: 40, weight: .bold))
-
-                                    Text(conditionText)
-                                        .foregroundColor(.secondary)
-                                        .font(.subheadline)
-                                }
-                                .frame(maxWidth: .infinity)
-                                .padding(.vertical, 12)
-                                .background(Color.white.opacity(0.85))
-                                .cornerRadius(30)
-                                .padding(.horizontal, 30)
-
-                                VStack(alignment: .leading, spacing: 6) {
-                                    Text("7-Day Forecast")
-                                        .font(.headline)
-                                        .padding(.horizontal, 8)
-
-                                    ForEach(Array(dailyForecast.enumerated()), id: \.element.date) { index, day in
-                                        HStack {
-                                            Text(day.date)
-                                                .font(.subheadline)
-                                                .frame(width: 100, alignment: .leading)
-
-                                            Spacer()
-
-                                            Image(systemName: weatherCodeToIcon(day.weatherCode))
-                                                .frame(width: 24)
-
-                                            Text("H: \(day.max)")
-                                                .font(.subheadline)
-                                                .foregroundColor(.primary)
-
-                                            Text("L: \(day.min)")
-                                                .font(.subheadline)
-                                                .foregroundColor(.secondary)
-                                        }
-                                        .padding(.horizontal, 20)
-                                        .padding(.vertical, 8)
-                                        .background(
-                                            ZStack {
-                                                if index % 2 != 0 {
-                                                    Capsule()
-                                                        .fill(LinearGradient(
-                                                            colors: [Color.blue.opacity(0.4), Color.purple.opacity(0.4)],
-                                                            startPoint: .leading,
-                                                            endPoint: .trailing
-                                                        ))
-                                                    Capsule()
-                                                        .fill(.ultraThinMaterial)
-                                                } else {
-                                                    Capsule()
-                                                        .fill(Color.white)
-                                                }
-                                            }
-                                        )
-                                        .cornerRadius(30)
-                                    }
-                                }
-                                .padding(.horizontal, 30)
-                            }
-                        } else {
-                            VStack(spacing: 10) {
-                                if tripForecastUnavailable {
-                                    VStack(spacing: 10) {
-                                        Image(systemName: "calendar.badge.clock")
-                                            .font(.system(size: 40))
+                                if selectedTab == "Current" {
+                                    VStack(spacing: 4) {
+                                        Text(trip.locationName)
+                                            .font(.title3).fontWeight(.semibold)
+                                        Image(systemName: weatherIconName)
+                                            .font(.system(size: 36))
+                                            .foregroundColor(.primary)
+                                        Text(temperatureText)
+                                            .font(.system(size: 40, weight: .bold))
+                                        Text(conditionText)
                                             .foregroundColor(.secondary)
-
-                                        Text("Forecast not available yet")
-                                            .font(.headline)
-
-                                        Text("Check back closer to your trip date.")
                                             .font(.subheadline)
-                                            .foregroundColor(.secondary)
-                                            .multilineTextAlignment(.center)
                                     }
                                     .frame(maxWidth: .infinity)
-                                    .padding(.vertical, 32)
-                                    .background(Color.white.opacity(0.85))
+                                    .padding(.vertical, 12)
+                                    .background(cardBackground)
                                     .cornerRadius(30)
                                     .padding(.horizontal, 30)
-                                } else if tripForecast.isEmpty {
-                                    ProgressView()
-                                        .padding()
-                                } else {
+
                                     VStack(alignment: .leading, spacing: 6) {
-                                        Text("Forecast for \(trip.name)")
+                                        Text("7-Day Forecast")
                                             .font(.headline)
                                             .padding(.horizontal, 8)
-
-                                        ForEach(Array(tripForecast.enumerated()), id: \.element.date) { index, day in
-                                            HStack {
-                                                Text(day.date)
-                                                    .font(.subheadline)
-                                                    .frame(width: 100, alignment: .leading)
-
-                                                Spacer()
-
-                                                Image(systemName: weatherCodeToIcon(day.weatherCode))
-                                                    .frame(width: 24)
-
-                                                Text("H: \(day.max)")
-                                                    .font(.subheadline)
-                                                    .foregroundColor(.primary)
-
-                                                Text("L: \(day.min)")
-                                                    .font(.subheadline)
-                                                    .foregroundColor(.secondary)
-                                            }
-                                            .padding(.horizontal, 20)
-                                            .padding(.vertical, 8)
-                                            .background(
-                                                ZStack {
-                                                    if index % 2 != 0 {
-                                                        Capsule()
-                                                            .fill(LinearGradient(
-                                                                colors: [Color.blue.opacity(0.4), Color.purple.opacity(0.4)],
-                                                                startPoint: .leading,
-                                                                endPoint: .trailing
-                                                            ))
-                                                        Capsule()
-                                                            .fill(.ultraThinMaterial)
-                                                    } else {
-                                                        Capsule()
-                                                            .fill(Color.white)
-                                                    }
-                                                }
-                                            )
-                                            .cornerRadius(30)
+                                        ForEach(Array(dailyForecast.enumerated()), id: \.element.date) { index, day in
+                                            forecastRow(index: index, day: day)
                                         }
                                     }
                                     .padding(.horizontal, 30)
+
+                                } else {
+                                    if tripForecastUnavailable {
+                                        VStack(spacing: 10) {
+                                            Image(systemName: "calendar.badge.clock")
+                                                .font(.system(size: 40))
+                                                .foregroundColor(.secondary)
+                                            Text("Forecast not available yet")
+                                                .font(.headline)
+                                            Text("Check back closer to your trip date.")
+                                                .font(.subheadline)
+                                                .foregroundColor(.secondary)
+                                                .multilineTextAlignment(.center)
+                                        }
+                                        .frame(maxWidth: .infinity)
+                                        .padding(.vertical, 32)
+                                        .background(cardBackground)
+                                        .cornerRadius(30)
+                                        .padding(.horizontal, 30)
+                                    } else if tripForecast.isEmpty {
+                                        ProgressView().padding()
+                                    } else {
+                                        VStack(alignment: .leading, spacing: 6) {
+                                            Text("Forecast for \(trip.name)")
+                                                .font(.headline)
+                                                .padding(.horizontal, 8)
+                                            ForEach(Array(tripForecast.enumerated()), id: \.element.date) { index, day in
+                                                forecastRow(index: index, day: day)
+                                            }
+                                        }
+                                        .padding(.horizontal, 30)
+                                    }
                                 }
                             }
+                            .padding(.bottom, 20)
                         }
                     } else {
                         Text("Tap a trip to view weather")
@@ -338,13 +242,47 @@ struct WeatherView: View {
         }
     }
 
+    @ViewBuilder
+    func forecastRow(index: Int, day: (date: String, max: String, min: String, weatherCode: Int)) -> some View {
+        HStack {
+            Text(day.date)
+                .font(.subheadline)
+                .frame(width: 100, alignment: .leading)
+            Spacer()
+            Image(systemName: weatherCodeToIcon(day.weatherCode))
+                .frame(width: 24)
+            Text("H: \(day.max)")
+                .font(.subheadline)
+                .foregroundColor(.primary)
+            Text("L: \(day.min)")
+                .font(.subheadline)
+                .foregroundColor(.secondary)
+        }
+        .padding(.horizontal, 20)
+        .padding(.vertical, 8)
+        .background(
+            ZStack {
+                if index % 2 != 0 {
+                    Capsule()
+                        .fill(LinearGradient(
+                            colors: [Color.blue.opacity(0.4), Color.purple.opacity(0.4)],
+                            startPoint: .leading, endPoint: .trailing
+                        ))
+                    Capsule().fill(.ultraThinMaterial)
+                } else {
+                    Capsule().fill(evenRowBackground)
+                }
+            }
+        )
+        .cornerRadius(30)
+    }
+
     private func loadWeather(for trip: Trip) async {
         let today = Calendar.current.startOfDay(for: Date())
         let tripStart = Calendar.current.startOfDay(for: trip.startDate)
         let tripEnd = Calendar.current.startOfDay(for: trip.endDate)
         let daysUntilTrip = Calendar.current.dateComponents([.day], from: today, to: tripStart).day ?? 0
         let tripDuration = max(1, (Calendar.current.dateComponents([.day], from: tripStart, to: tripEnd).day ?? 0) + 1)
-
         let totalDaysNeeded = daysUntilTrip + tripDuration
         let maxForecastDays = 17
         let daysToRequest = max(7, min(totalDaysNeeded, maxForecastDays))
@@ -358,16 +296,14 @@ struct WeatherView: View {
 
         do {
             let (data, _) = try await URLSession.shared.data(from: url)
-
             if let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any] {
                 if let current = json["current_weather"] as? [String: Any],
                    let temp = current["temperature"] as? Double,
                    let weatherCode = current["weathercode"] as? Int {
-                    let condition = weatherCodeToDescription(weatherCode)
                     DispatchQueue.main.async {
                         self.temperatureText = "\(Int(temp))°"
-                        self.conditionText = condition
-                        self.weatherIconName = weatherCodeToIcon(weatherCode)
+                        self.conditionText = self.weatherCodeToDescription(weatherCode)
+                        self.weatherIconName = self.weatherCodeToIcon(weatherCode)
                     }
                 }
 
@@ -386,9 +322,9 @@ struct WeatherView: View {
                     if daysUntilTrip >= maxForecastDays {
                         DispatchQueue.main.async { self.tripForecastUnavailable = true }
                     } else {
+                        let formatter = DateFormatter()
+                        formatter.dateFormat = "yyyy-MM-dd"
                         for i in 0..<dates.count {
-                            let formatter = DateFormatter()
-                            formatter.dateFormat = "yyyy-MM-dd"
                             if let date = formatter.date(from: dates[i]) {
                                 let day = Calendar.current.startOfDay(for: date)
                                 if day >= tripStart && day <= tripEnd {
@@ -411,7 +347,6 @@ struct WeatherView: View {
             }
         } catch {
             DispatchQueue.main.async { self.temperatureText = "--"; self.conditionText = "Unable to load weather" }
-            print("Open-Meteo error for \(trip.name):", error)
         }
     }
 
@@ -456,7 +391,6 @@ struct WeatherView: View {
     }
 }
 
-// Sample data for preview.
 #Preview {
     WeatherView(
         trips: .constant([

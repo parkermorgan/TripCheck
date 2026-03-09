@@ -11,7 +11,34 @@
 		082012442F5D3DA9009D6514 /* Secrets.plist in Resources */ = {isa = PBXBuildFile; fileRef = 082012432F5D3DA9009D6514 /* Secrets.plist */; };
 		082012482F5D3E61009D6514 /* Secrets.example.plist in Resources */ = {isa = PBXBuildFile; fileRef = 082012472F5D3E61009D6514 /* Secrets.example.plist */; };
 		08C3EEE62F5E10110016BC33 /* README.md in Resources */ = {isa = PBXBuildFile; fileRef = 08C3EEE52F5E10110016BC33 /* README.md */; };
+		08C3EF1E2F5E7D170016BC33 /* WidgetKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 08C3EF1D2F5E7D170016BC33 /* WidgetKit.framework */; };
+		08C3EF202F5E7D170016BC33 /* SwiftUI.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 08C3EF1F2F5E7D170016BC33 /* SwiftUI.framework */; };
+		08C3EF312F5E7D180016BC33 /* TripCheckWidgetExtension.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 08C3EF1B2F5E7D170016BC33 /* TripCheckWidgetExtension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 /* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		08C3EF2F2F5E7D180016BC33 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 086957D92F12B6EB001AB7D8 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 08C3EF1A2F5E7D170016BC33;
+			remoteInfo = TripCheckWidgetExtension;
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXCopyFilesBuildPhase section */
+		08C3EF322F5E7D180016BC33 /* Embed Foundation Extensions */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 13;
+			files = (
+				08C3EF312F5E7D180016BC33 /* TripCheckWidgetExtension.appex in Embed Foundation Extensions */,
+			);
+			name = "Embed Foundation Extensions";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
 		082012412F5D3CF7009D6514 /* .gitignore */ = {isa = PBXFileReference; lastKnownFileType = text; path = .gitignore; sourceTree = "<group>"; };
@@ -19,12 +46,34 @@
 		082012472F5D3E61009D6514 /* Secrets.example.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Secrets.example.plist; sourceTree = "<group>"; };
 		086957E12F12B6EB001AB7D8 /* park-planner.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "park-planner.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 		08C3EEE52F5E10110016BC33 /* README.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = "<group>"; };
+		08C3EF1B2F5E7D170016BC33 /* TripCheckWidgetExtension.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = TripCheckWidgetExtension.appex; sourceTree = BUILT_PRODUCTS_DIR; };
+		08C3EF1D2F5E7D170016BC33 /* WidgetKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = WidgetKit.framework; path = System/Library/Frameworks/WidgetKit.framework; sourceTree = SDKROOT; };
+		08C3EF1F2F5E7D170016BC33 /* SwiftUI.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = SwiftUI.framework; path = System/Library/Frameworks/SwiftUI.framework; sourceTree = SDKROOT; };
+		08C3EF382F5E7D790016BC33 /* TripCheckWidgetExtension.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = TripCheckWidgetExtension.entitlements; sourceTree = "<group>"; };
 /* End PBXFileReference section */
+
+/* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
+		08C3EF352F5E7D180016BC33 /* Exceptions for "TripCheckWidget" folder in "TripCheckWidgetExtension" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Info.plist,
+			);
+			target = 08C3EF1A2F5E7D170016BC33 /* TripCheckWidgetExtension */;
+		};
+/* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		086957E32F12B6EB001AB7D8 /* park-planner */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			path = "park-planner";
+			sourceTree = "<group>";
+		};
+		08C3EF212F5E7D170016BC33 /* TripCheckWidget */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				08C3EF352F5E7D180016BC33 /* Exceptions for "TripCheckWidget" folder in "TripCheckWidgetExtension" target */,
+			);
+			path = TripCheckWidget;
 			sourceTree = "<group>";
 		};
 /* End PBXFileSystemSynchronizedRootGroup section */
@@ -37,15 +86,27 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		08C3EF182F5E7D170016BC33 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				08C3EF202F5E7D170016BC33 /* SwiftUI.framework in Frameworks */,
+				08C3EF1E2F5E7D170016BC33 /* WidgetKit.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
 		086957D82F12B6EB001AB7D8 = {
 			isa = PBXGroup;
 			children = (
+				08C3EF382F5E7D790016BC33 /* TripCheckWidgetExtension.entitlements */,
 				082012432F5D3DA9009D6514 /* Secrets.plist */,
 				082012472F5D3E61009D6514 /* Secrets.example.plist */,
 				086957E32F12B6EB001AB7D8 /* park-planner */,
+				08C3EF212F5E7D170016BC33 /* TripCheckWidget */,
+				08C3EF1C2F5E7D170016BC33 /* Frameworks */,
 				086957E22F12B6EB001AB7D8 /* Products */,
 				082012412F5D3CF7009D6514 /* .gitignore */,
 				08C3EEE52F5E10110016BC33 /* README.md */,
@@ -56,8 +117,18 @@
 			isa = PBXGroup;
 			children = (
 				086957E12F12B6EB001AB7D8 /* park-planner.app */,
+				08C3EF1B2F5E7D170016BC33 /* TripCheckWidgetExtension.appex */,
 			);
 			name = Products;
+			sourceTree = "<group>";
+		};
+		08C3EF1C2F5E7D170016BC33 /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+				08C3EF1D2F5E7D170016BC33 /* WidgetKit.framework */,
+				08C3EF1F2F5E7D170016BC33 /* SwiftUI.framework */,
+			);
+			name = Frameworks;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -70,10 +141,12 @@
 				086957DD2F12B6EB001AB7D8 /* Sources */,
 				086957DE2F12B6EB001AB7D8 /* Frameworks */,
 				086957DF2F12B6EB001AB7D8 /* Resources */,
+				08C3EF322F5E7D180016BC33 /* Embed Foundation Extensions */,
 			);
 			buildRules = (
 			);
 			dependencies = (
+				08C3EF302F5E7D180016BC33 /* PBXTargetDependency */,
 			);
 			fileSystemSynchronizedGroups = (
 				086957E32F12B6EB001AB7D8 /* park-planner */,
@@ -84,6 +157,28 @@
 			productName = "park-planner";
 			productReference = 086957E12F12B6EB001AB7D8 /* park-planner.app */;
 			productType = "com.apple.product-type.application";
+		};
+		08C3EF1A2F5E7D170016BC33 /* TripCheckWidgetExtension */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 08C3EF362F5E7D180016BC33 /* Build configuration list for PBXNativeTarget "TripCheckWidgetExtension" */;
+			buildPhases = (
+				08C3EF172F5E7D170016BC33 /* Sources */,
+				08C3EF182F5E7D170016BC33 /* Frameworks */,
+				08C3EF192F5E7D170016BC33 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			fileSystemSynchronizedGroups = (
+				08C3EF212F5E7D170016BC33 /* TripCheckWidget */,
+			);
+			name = TripCheckWidgetExtension;
+			packageProductDependencies = (
+			);
+			productName = TripCheckWidgetExtension;
+			productReference = 08C3EF1B2F5E7D170016BC33 /* TripCheckWidgetExtension.appex */;
+			productType = "com.apple.product-type.app-extension";
 		};
 /* End PBXNativeTarget section */
 
@@ -96,6 +191,9 @@
 				LastUpgradeCheck = 2600;
 				TargetAttributes = {
 					086957E02F12B6EB001AB7D8 = {
+						CreatedOnToolsVersion = 26.0.1;
+					};
+					08C3EF1A2F5E7D170016BC33 = {
 						CreatedOnToolsVersion = 26.0.1;
 					};
 				};
@@ -115,6 +213,7 @@
 			projectRoot = "";
 			targets = (
 				086957E02F12B6EB001AB7D8 /* park-planner */,
+				08C3EF1A2F5E7D170016BC33 /* TripCheckWidgetExtension */,
 			);
 		};
 /* End PBXProject section */
@@ -131,6 +230,13 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		08C3EF192F5E7D170016BC33 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
@@ -141,7 +247,22 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		08C3EF172F5E7D170016BC33 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		08C3EF302F5E7D180016BC33 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 08C3EF1A2F5E7D170016BC33 /* TripCheckWidgetExtension */;
+			targetProxy = 08C3EF2F2F5E7D180016BC33 /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
 
 /* Begin XCBuildConfiguration section */
 		086957EA2F12B6ED001AB7D8 /* Debug */ = {
@@ -268,6 +389,7 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = "park-planner/park-planner.entitlements";
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = F7K8AX9W2F;
@@ -301,6 +423,7 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = "park-planner/park-planner.entitlements";
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = F7K8AX9W2F;
@@ -329,6 +452,68 @@
 			};
 			name = Release;
 		};
+		08C3EF332F5E7D180016BC33 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				ASSETCATALOG_COMPILER_WIDGET_BACKGROUND_COLOR_NAME = WidgetBackground;
+				CODE_SIGN_ENTITLEMENTS = TripCheckWidgetExtension.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = F7K8AX9W2F;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = TripCheckWidget/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = TripCheckWidget;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = "parkermorgan.park-planner.TripCheckWidget";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		08C3EF342F5E7D180016BC33 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				ASSETCATALOG_COMPILER_WIDGET_BACKGROUND_COLOR_NAME = WidgetBackground;
+				CODE_SIGN_ENTITLEMENTS = TripCheckWidgetExtension.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = F7K8AX9W2F;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = TripCheckWidget/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = TripCheckWidget;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = "parkermorgan.park-planner.TripCheckWidget";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
@@ -346,6 +531,15 @@
 			buildConfigurations = (
 				086957ED2F12B6ED001AB7D8 /* Debug */,
 				086957EE2F12B6ED001AB7D8 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		08C3EF362F5E7D180016BC33 /* Build configuration list for PBXNativeTarget "TripCheckWidgetExtension" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				08C3EF332F5E7D180016BC33 /* Debug */,
+				08C3EF342F5E7D180016BC33 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;

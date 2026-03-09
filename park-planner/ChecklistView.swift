@@ -15,6 +15,11 @@ struct ChecklistRow: View {
     let onEdit: (String) -> Void
     @State private var isEditing = false
     @State private var editText = ""
+    @Environment(\.colorScheme) var colorScheme
+
+    var rowBackground: Color {
+        colorScheme == .dark ? Color(.systemGray6) : Color.white
+    }
 
     var body: some View {
         HStack {
@@ -48,7 +53,7 @@ struct ChecklistRow: View {
             }
         }
         .padding()
-        .background(Color.white)
+        .background(rowBackground)
         .cornerRadius(30)
     }
 }
@@ -56,9 +61,15 @@ struct ChecklistRow: View {
 struct TripChecklistTab: View {
     @Binding var trips: [Trip]
     @State private var selectedTripID: UUID?
+    @Environment(\.colorScheme) var colorScheme
+
+    var cardBackground: Color {
+        colorScheme == .dark ? Color(.systemGray6) : Color(.systemBackground).opacity(0.85)
+    }
 
     var body: some View {
         ZStack {
+            // Background
             LinearGradient(
                 colors: [Color.blue.opacity(0.3), Color.purple.opacity(0.3)],
                 startPoint: .topLeading,
@@ -66,7 +77,7 @@ struct TripChecklistTab: View {
             )
             .ignoresSafeArea()
 
-            // Decorative banners
+            // Top banner
             VStack {
                 HStack {
                     Rectangle()
@@ -83,10 +94,14 @@ struct TripChecklistTab: View {
                         )
                     Spacer()
                 }
-                .ignoresSafeArea()
-
                 Spacer()
+            }
+            .ignoresSafeArea()
+            .allowsHitTesting(false)
 
+            // Bottom banner
+            VStack {
+                Spacer()
                 HStack {
                     Spacer()
                     Rectangle()
@@ -96,9 +111,9 @@ struct TripChecklistTab: View {
                         ))
                         .frame(width: UIScreen.main.bounds.width * 0.75, height: 130)
                         .clipShape(.rect(topLeadingRadius: 80, bottomLeadingRadius: 0, bottomTrailingRadius: 0, topTrailingRadius: 0))
-                        .ignoresSafeArea(edges: .bottom)
                 }
             }
+            .ignoresSafeArea()
             .allowsHitTesting(false)
 
             // Main content
@@ -111,7 +126,6 @@ struct TripChecklistTab: View {
                 VStack(spacing: 10) {
                     Spacer().frame(height: 100)
 
-                    // Pill selector in empty state too
                     if !trips.isEmpty {
                         ScrollView(.horizontal, showsIndicators: false) {
                             HStack(spacing: 12) {
@@ -126,7 +140,16 @@ struct TripChecklistTab: View {
                                     .padding(.horizontal, 16)
                                     .padding(.vertical, 10)
                                     .frame(width: 180)
-                                    .background(Capsule().fill(Color.white.opacity(0.85)))
+                                    .background(
+                                        ZStack {
+                                            Capsule()
+                                                .fill(LinearGradient(
+                                                    colors: [Color.blue.opacity(0.4), Color.purple.opacity(0.4)],
+                                                    startPoint: .leading, endPoint: .trailing
+                                                ))
+                                            Capsule().fill(.ultraThinMaterial)
+                                        }
+                                    )
                                     .onTapGesture { selectedTripID = trip.id }
                                 }
                             }
@@ -148,7 +171,7 @@ struct TripChecklistTab: View {
                     }
                     .frame(maxWidth: .infinity)
                     .padding(.vertical, 32)
-                    .background(Color(.systemBackground).opacity(0.85))
+                    .background(cardBackground)
                     .cornerRadius(30)
                     .padding(.horizontal, 30)
 
@@ -179,8 +202,13 @@ struct ChecklistView: View {
 
     @State private var newItemText = ""
     @State private var selectedCategory = "Travel Prep"
+    @Environment(\.colorScheme) var colorScheme
 
     let categories = ["Travel Prep", "Packing", "At the Park"]
+
+    var inputBackground: Color {
+        colorScheme == .dark ? Color(.systemGray6) : Color.white
+    }
 
     var visibleIndices: [Int] {
         trips[tripIndex].checklist.indices.filter { trips[tripIndex].checklist[$0].category == selectedCategory }
@@ -207,22 +235,15 @@ struct ChecklistView: View {
                             .frame(width: 180)
                             .background(
                                 ZStack {
-                                    // Gradient base
                                     Capsule()
                                         .fill(LinearGradient(
                                             colors: [Color.blue.opacity(0.4), Color.purple.opacity(0.4)],
-                                            startPoint: .leading,
-                                            endPoint: .trailing
+                                            startPoint: .leading, endPoint: .trailing
                                         ))
-                                    // Frosted glass on top
-                                    Capsule()
-                                        .fill(.ultraThinMaterial)
-                                    // Extra tint + border when selected
+                                    Capsule().fill(.ultraThinMaterial)
                                     if selectedTripID == trip.id {
-                                        Capsule()
-                                            .fill(Color.white.opacity(0.1))
-                                        Capsule()
-                                            .strokeBorder(Color.white.opacity(0.4), lineWidth: 1)
+                                        Capsule().fill(Color.white.opacity(0.1))
+                                        Capsule().strokeBorder(Color.white.opacity(0.4), lineWidth: 1)
                                     }
                                 }
                             )
@@ -250,7 +271,7 @@ struct ChecklistView: View {
                             .font(.headline)
                     }
                     .padding()
-                    .background(Color.white)
+                    .background(inputBackground)
                     .cornerRadius(30)
 
                     Button {
@@ -260,7 +281,7 @@ struct ChecklistView: View {
                         Image(systemName: "arrow.up.arrow.down")
                             .foregroundColor(.primary)
                             .padding()
-                            .background(Color.white)
+                            .background(inputBackground)
                             .clipShape(Circle())
                     }
                 }
@@ -298,7 +319,7 @@ struct ChecklistView: View {
                             .foregroundColor(.red)
                             .padding(.vertical, 8)
                             .padding(.horizontal, 24)
-                            .background(Color.white)
+                            .background(inputBackground)
                             .cornerRadius(20)
                     }
                     .padding(.bottom, 8)

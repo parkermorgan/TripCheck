@@ -12,6 +12,12 @@ struct ContentView: View {
     @State private var showResetConfirm = false
     @State private var resetTarget: ResetTarget = .both
 
+    @Environment(\.colorScheme) var colorScheme
+
+    var cardBackground: Color {
+        colorScheme == .dark ? Color(.systemGray6) : Color(.systemBackground).opacity(0.85)
+    }
+
     // Animation states
     @State private var logoScale: CGFloat = 0.7
     @State private var logoOpacity: CGFloat = 0
@@ -83,7 +89,7 @@ struct ContentView: View {
                 )
                 .ignoresSafeArea()
 
-                // Bottom banner — non-interactive
+                // Bottom banner
                 VStack {
                     Spacer()
                     HStack {
@@ -118,7 +124,7 @@ struct ContentView: View {
                     }
                 }
 
-                // Top banner + button — rendered last so it's on top
+                // Top banner + button
                 VStack {
                     ZStack(alignment: .topTrailing) {
                         HStack {
@@ -146,7 +152,6 @@ struct ContentView: View {
                                 .padding(16)
                         }
                     }
-                   
                     Spacer()
                 }
             }
@@ -330,7 +335,8 @@ struct ContentView: View {
                     }
                 }
                 .padding(20)
-                .background(Color(.systemBackground).opacity(0.85))
+                .frame(maxWidth: .infinity)
+                .background(cardBackground)
                 .cornerRadius(30)
                 .padding(.horizontal, 30)
                 .shadow(color: .black.opacity(0.07), radius: 14, x: 0, y: 4)
@@ -414,7 +420,7 @@ struct ContentView: View {
                             }
                             .padding(.horizontal, 20)
                             .padding(.vertical, 12)
-                            .background(Color(.systemBackground).opacity(0.85))
+                            .background(cardBackground)
                             .cornerRadius(30)
                         }
                         .transition(.move(edge: .top).combined(with: .opacity))

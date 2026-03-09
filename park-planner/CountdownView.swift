@@ -6,6 +6,7 @@ struct CountdownView: View {
     let trip: Trip
 
     @State private var now: Date = Date()
+    @Environment(\.colorScheme) var colorScheme
     let timer = Timer.publish(every: 1, on: .main, in: .common).autoconnect()
 
     private var secondsRemaining: Int {
@@ -22,8 +23,13 @@ struct CountdownView: View {
         Calendar.current.isDate(trip.startDate, inSameDayAs: now)
     }
 
+    private var cardBackground: Color {
+        colorScheme == .dark ? Color(.systemGray6) : Color.white.opacity(0.85)
+    }
+
     var body: some View {
         ZStack {
+            // Background gradient
             LinearGradient(
                 colors: [Color.blue.opacity(0.3), Color.purple.opacity(0.3)],
                 startPoint: .topLeading,
@@ -31,62 +37,46 @@ struct CountdownView: View {
             )
             .ignoresSafeArea()
 
+            // Top banner — own layer
             VStack {
                 HStack {
                     Rectangle()
-                        .fill(
-                            LinearGradient(
-                                colors: [Color.blue.opacity(0.5), Color.purple.opacity(0.4)],
-                                startPoint: .leading,
-                                endPoint: .trailing
-                            )
-                        )
+                        .fill(LinearGradient(
+                            colors: [Color.blue.opacity(0.5), Color.purple.opacity(0.4)],
+                            startPoint: .leading, endPoint: .trailing
+                        ))
                         .frame(width: UIScreen.main.bounds.width * 0.75, height: 130)
-                        .clipShape(
-                            .rect(
-                                topLeadingRadius: 0,
-                                bottomLeadingRadius: 0,
-                                bottomTrailingRadius: 80,
-                                topTrailingRadius: 0
-                            )
-                        )
+                        .clipShape(.rect(topLeadingRadius: 0, bottomLeadingRadius: 0, bottomTrailingRadius: 80, topTrailingRadius: 0))
                         .overlay(
                             Text("Countdown")
-                                .font(.title2)
-                                .fontWeight(.semibold)
-                                .foregroundColor(.white)
-                                .padding(.leading, 20),
+                                .font(.title2).fontWeight(.semibold).foregroundColor(.white).padding(.leading, 20),
                             alignment: .leading
                         )
                     Spacer()
                 }
-                .ignoresSafeArea()
-
                 Spacer()
+            }
+            .ignoresSafeArea()
+            .allowsHitTesting(false)
 
+            // Bottom banner — own layer, matching ContentView pattern
+            VStack {
+                Spacer()
                 HStack {
                     Spacer()
                     Rectangle()
-                        .fill(
-                            LinearGradient(
-                                colors: [Color.purple.opacity(0.4), Color.blue.opacity(0.5)],
-                                startPoint: .leading,
-                                endPoint: .trailing
-                            )
-                        )
+                        .fill(LinearGradient(
+                            colors: [Color.purple.opacity(0.4), Color.blue.opacity(0.5)],
+                            startPoint: .leading, endPoint: .trailing
+                        ))
                         .frame(width: UIScreen.main.bounds.width * 0.75, height: 130)
-                        .clipShape(
-                            .rect(
-                                topLeadingRadius: 80,
-                                bottomLeadingRadius: 0,
-                                bottomTrailingRadius: 0,
-                                topTrailingRadius: 0
-                            )
-                        )
+                        .clipShape(.rect(topLeadingRadius: 80, bottomLeadingRadius: 0, bottomTrailingRadius: 0, topTrailingRadius: 0))
                 }
-                .ignoresSafeArea()
             }
+            .ignoresSafeArea()
+            .allowsHitTesting(false)
 
+            // Content
             VStack(spacing: 24) {
                 Spacer().frame(height: 100)
 
@@ -112,7 +102,7 @@ struct CountdownView: View {
                     }
                     .frame(maxWidth: .infinity)
                     .padding(.vertical, 32)
-                    .background(Color.white.opacity(0.85))
+                    .background(cardBackground)
                     .cornerRadius(30)
                     .padding(.horizontal, 30)
 
@@ -127,7 +117,7 @@ struct CountdownView: View {
                     }
                     .frame(maxWidth: .infinity)
                     .padding(.vertical, 32)
-                    .background(Color.white.opacity(0.85))
+                    .background(cardBackground)
                     .cornerRadius(30)
                     .padding(.horizontal, 30)
 
@@ -159,6 +149,12 @@ private struct CountdownUnit: View {
     let value: Int
     let label: String
 
+    @Environment(\.colorScheme) var colorScheme
+
+    var cardBackground: Color {
+        colorScheme == .dark ? Color(.systemGray6) : Color.white.opacity(0.85)
+    }
+
     var body: some View {
         VStack(spacing: 6) {
             Text(String(format: "%02d", value))
@@ -171,7 +167,7 @@ private struct CountdownUnit: View {
         }
         .frame(maxWidth: .infinity)
         .padding(.vertical, 16)
-        .background(Color.white.opacity(0.85))
+        .background(cardBackground)
         .cornerRadius(30)
     }
 }
