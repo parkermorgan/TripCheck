@@ -183,7 +183,7 @@ struct ContentView: View {
                     ))
                     .frame(width: 180, height: 180)
 
-                Image("TripCheck-logo")
+                Image("TripCheck - Logo")
                     .resizable()
                     .scaledToFit()
                     .frame(width: 130, height: 130)

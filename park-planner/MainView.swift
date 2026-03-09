@@ -143,7 +143,7 @@ struct MainView: View {
                             }
                             .frame(maxWidth: .infinity)
                             .padding(.vertical, 32)
-                            .background(Color(.systemGray6).opacity(0.85))
+                            .background(Color(.systemBackground).opacity(0.85))
                             .cornerRadius(30)
                             .padding(.horizontal, 30)
                             Spacer()

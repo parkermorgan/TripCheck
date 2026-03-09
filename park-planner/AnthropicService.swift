@@ -140,7 +140,7 @@ struct AnthropicService {
     let tools: [ToolDefinition] = [
         ToolDefinition(
             name: "create_trip",
-            description: "Add a new trip with a name, location, and date. IMPORTANT: Before calling this tool, you MUST ask the user if they want the default checklist items added to the trip. Wait for their response before proceeding.",
+            description: "Add a new trip with a name, location, and date. IMPORTANT: Before calling this tool, you MUST ask the user if they want the default checklist items added to the trip. Wait for their response before proceeding. Only ask for the default checklist if that have not already told you.",
             input_schema: ToolInputSchema(
                 type: "object",
                 properties: [
@@ -162,7 +162,7 @@ struct AnthropicService {
                     ),
                     "use_default_checklist": ToolProperty(
                         type: "string",
-                        description: "Whether to add the default checklist items to the trip. Ask the user if they want this before creating. Use 'yes' or 'no'.",
+                        description: "Whether to add the default checklist items to the trip. Ask the user if they want this before creating. Use 'yes' or 'no'. Only ask this if the user has not already done so.",
                         enumValues: ["yes", "no"]
                     )
                 ],

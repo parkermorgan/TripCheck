@@ -213,8 +213,8 @@ struct TripInfoView: View {
                                 selectedTrip: $selectedTrip,
                                 onEdit: { tripToEdit = trip },
                                 onDelete: {
-                                    if selectedTrip == trip.id { selectedTrip = nil }
-                                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                                    withAnimation {
+                                        if selectedTrip == trip.id { selectedTrip = nil }
                                         trips.removeAll { $0.id == trip.id }
                                     }
                                 }
