@@ -234,6 +234,9 @@ struct WeatherView: View {
         }
         .onAppear {
             selectedTripID = trips.first?.id
+            if let trip = trips.first {
+                Task { await loadWeather(for: trip) }
+            }
         }
         .onChange(of: trips) { updatedTrips in
             if let updated = updatedTrips.first(where: { $0.id == selectedTripID }) {
@@ -284,8 +287,11 @@ struct WeatherView: View {
         let daysUntilTrip = Calendar.current.dateComponents([.day], from: today, to: tripStart).day ?? 0
         let tripDuration = max(1, (Calendar.current.dateComponents([.day], from: tripStart, to: tripEnd).day ?? 0) + 1)
         let totalDaysNeeded = daysUntilTrip + tripDuration
-        let maxForecastDays = 17
-        let daysToRequest = max(7, min(totalDaysNeeded, maxForecastDays))
+        let maxForecastDays = 16
+
+        // Always request at least 7 days for current forecast
+        // Only extend if the trip falls within the 16-day window
+        let daysToRequest = daysUntilTrip >= maxForecastDays ? 7 : max(7, min(totalDaysNeeded, maxForecastDays))
 
         let urlString = "https://api.open-meteo.com/v1/forecast?latitude=\(trip.coordinate.latitude)&longitude=\(trip.coordinate.longitude)&current_weather=true&daily=temperature_2m_max,temperature_2m_min,weathercode&forecast_days=\(daysToRequest)&temperature_unit=fahrenheit&timezone=auto"
 

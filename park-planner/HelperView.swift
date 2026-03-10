@@ -69,22 +69,14 @@ struct HelperView: View {
             return tripSummaries
 
         case .addChecklistItem(let tripName, let itemTitle, let category):
-            if let index = trips.firstIndex(where: { $0.name.lowercased() == tripName.lowercased() }) {
+            let matchIndex = trips.firstIndex(where: { $0.name.lowercased() == tripName.lowercased() })
+                ?? trips.firstIndex(where: { $0.name.lowercased().contains(tripName.lowercased()) })
+            if let index = matchIndex {
                 let newItem = CheckListItem(title: itemTitle, isCompleted: false, category: category)
-                DispatchQueue.main.async {
-                    trips[index].checklist.append(newItem)
-                    saveTrips(trips)
-                }
+                trips[index].checklist.append(newItem)
+                saveTrips(trips)
                 return "Successfully added '\(itemTitle)' to the \(category) checklist for \(trips[index].name)."
             } else {
-                if let index = trips.firstIndex(where: { $0.name.lowercased().contains(tripName.lowercased()) }) {
-                    let newItem = CheckListItem(title: itemTitle, isCompleted: false, category: category)
-                    DispatchQueue.main.async {
-                        trips[index].checklist.append(newItem)
-                        saveTrips(trips)
-                    }
-                    return "Successfully added '\(itemTitle)' to the \(category) checklist for \(trips[index].name)."
-                }
                 return "Could not find a trip named '\(tripName)'. Available trips: \(trips.map { $0.name }.joined(separator: ", "))"
             }
 
