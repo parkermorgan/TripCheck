@@ -211,149 +211,143 @@ struct ChecklistView: View {
     }
 
     var visibleIndices: [Int] {
-        trips[tripIndex].checklist.indices.filter { trips[tripIndex].checklist[$0].category == selectedCategory }
+        // SAFETY CHECK: Ensure the trip still exists before accessing checklist
+        guard tripIndex < trips.count else { return [] }
+        
+        return trips[tripIndex].checklist.indices.filter { trips[tripIndex].checklist[$0].category == selectedCategory }
     }
 
     var body: some View {
         ZStack {
-            VStack(spacing: 12) {
-                Spacer().frame(height: 100)
+            // SAFETY CHECK: Wrap content in a count check
+            if tripIndex < trips.count {
+                VStack(spacing: 12) {
+                    Spacer().frame(height: 100)
 
-                // Trip pill selector
-                ScrollView(.horizontal, showsIndicators: false) {
-                    HStack(spacing: 12) {
-                        ForEach(trips) { trip in
-                            VStack(alignment: .leading, spacing: 4) {
-                                Text(trip.name)
-                                    .font(.headline)
-                                Text(trip.locationName)
-                                    .font(.caption)
-                                    .foregroundColor(.secondary)
-                            }
-                            .padding(.horizontal, 16)
-                            .padding(.vertical, 10)
-                            .frame(width: 180)
-                            .background(
-                                ZStack {
-                                    Capsule()
-                                        .fill(LinearGradient(
-                                            colors: [Color.blue.opacity(0.4), Color.purple.opacity(0.4)],
-                                            startPoint: .leading, endPoint: .trailing
-                                        ))
-                                    Capsule().fill(.ultraThinMaterial)
-                                    if selectedTripID == trip.id {
-                                        Capsule().fill(Color.white.opacity(0.1))
-                                        Capsule().strokeBorder(Color.white.opacity(0.4), lineWidth: 1)
-                                    }
+                    // Trip pill selector
+                    ScrollView(.horizontal, showsIndicators: false) {
+                        HStack(spacing: 12) {
+                            ForEach(trips) { trip in
+                                VStack(alignment: .leading, spacing: 4) {
+                                    Text(trip.name)
+                                        .font(.headline)
+                                    Text(trip.locationName)
+                                        .font(.caption)
+                                        .foregroundColor(.secondary)
                                 }
-                            )
-                            .onTapGesture {
-                                selectedTripID = trip.id
+                                .padding(.horizontal, 16)
+                                .padding(.vertical, 10)
+                                .frame(width: 180)
+                                .background(
+                                    ZStack {
+                                        Capsule()
+                                            .fill(LinearGradient(
+                                                colors: [Color.blue.opacity(0.4), Color.purple.opacity(0.4)],
+                                                startPoint: .leading, endPoint: .trailing
+                                            ))
+                                        Capsule().fill(.ultraThinMaterial)
+                                        if selectedTripID == trip.id {
+                                            Capsule().fill(Color.white.opacity(0.1))
+                                            Capsule().strokeBorder(Color.white.opacity(0.4), lineWidth: 1)
+                                        }
+                                    }
+                                )
+                                .onTapGesture {
+                                    selectedTripID = trip.id
+                                }
                             }
+                        }
+                        .padding(.horizontal, 30)
+                        .padding(.vertical, 4)
+                    }
+
+                    // Category picker
+                    Picker("Category", selection: $selectedCategory) {
+                        ForEach(categories, id: \.self) { Text($0) }
+                    }
+                    .pickerStyle(.segmented)
+                    .padding(.horizontal, 16)
+
+                    HStack(spacing: 12) {
+                        HStack {
+                            TextField("New item", text: $newItemText)
+                                .textFieldStyle(.plain)
+                            Button("Add") { addItem() }
+                                .font(.headline)
+                        }
+                        .padding()
+                        .background(inputBackground)
+                        .cornerRadius(30)
+
+                        Button {
+                            trips[tripIndex].checklist.sort { $0.title.lowercased() < $1.title.lowercased() }
+                            saveTrips(trips)
+                        } label: {
+                            Image(systemName: "arrow.up.arrow.down")
+                                .foregroundColor(.primary)
+                                .padding()
+                                .background(inputBackground)
+                                .clipShape(Circle())
                         }
                     }
                     .padding(.horizontal, 30)
-                    .padding(.vertical, 4)
-                }
 
-                // Category picker
-                Picker("Category", selection: $selectedCategory) {
-                    ForEach(categories, id: \.self) { Text($0) }
-                }
-                .pickerStyle(.segmented)
-                .padding(.horizontal, 16)
-
-                HStack(spacing: 12) {
-                    HStack {
-                        TextField("New item", text: $newItemText)
-                            .textFieldStyle(.plain)
-                        Button("Add") { addItem() }
-                            .font(.headline)
+                    List {
+                        ForEach(visibleIndices, id: \.self) { idx in
+                            ChecklistRow(
+                                item: $trips[tripIndex].checklist[idx],
+                                onToggle: {
+                                    trips[tripIndex].checklist[idx].isCompleted.toggle()
+                                    saveTrips(trips)
+                                },
+                                onEdit: { newTitle in
+                                    trips[tripIndex].checklist[idx].title = newTitle
+                                    saveTrips(trips)
+                                }
+                            )
+                            .listRowBackground(Color.clear)
+                        }
+                        .onDelete(perform: deleteItems)
                     }
-                    .padding()
-                    .background(inputBackground)
-                    .cornerRadius(30)
+                    .listStyle(.plain)
+                    .scrollContentBackground(.hidden)
+                    .background(Color.clear)
+                    .padding(.horizontal, 16)
 
-                    Button {
-                        trips[tripIndex].checklist.sort { $0.title.lowercased() < $1.title.lowercased() }
-                        saveTrips(trips)
-                    } label: {
-                        Image(systemName: "arrow.up.arrow.down")
-                            .foregroundColor(.primary)
-                            .padding()
-                            .background(inputBackground)
-                            .clipShape(Circle())
+                    if !visibleIndices.isEmpty {
+                        Button(role: .destructive) {
+                            trips[tripIndex].checklist.removeAll { $0.category == selectedCategory }
+                            saveTrips(trips)
+                        } label: {
+                            Text("Clear All")
+                                .font(.subheadline)
+                                .foregroundColor(.red)
+                                .padding(.vertical, 8)
+                                .padding(.horizontal, 24)
+                                .background(inputBackground)
+                                .cornerRadius(20)
+                        }
+                        .padding(.bottom, 8)
                     }
                 }
-                .padding(.horizontal, 30)
-
-                List {
-                    ForEach(visibleIndices, id: \.self) { idx in
-                        ChecklistRow(
-                            item: $trips[tripIndex].checklist[idx],
-                            onToggle: {
-                                trips[tripIndex].checklist[idx].isCompleted.toggle()
-                                saveTrips(trips)
-                            },
-                            onEdit: { newTitle in
-                                trips[tripIndex].checklist[idx].title = newTitle
-                                saveTrips(trips)
-                            }
-                        )
-                        .listRowBackground(Color.clear)
-                    }
-                    .onDelete(perform: deleteItems)
-                }
-                .listStyle(.plain)
-                .scrollContentBackground(.hidden)
-                .background(Color.clear)
-                .padding(.horizontal, 16)
-
-                if !visibleIndices.isEmpty {
-                    Button(role: .destructive) {
-                        trips[tripIndex].checklist.removeAll { $0.category == selectedCategory }
-                        saveTrips(trips)
-                    } label: {
-                        Text("Clear All")
-                            .font(.subheadline)
-                            .foregroundColor(.red)
-                            .padding(.vertical, 8)
-                            .padding(.horizontal, 24)
-                            .background(inputBackground)
-                            .cornerRadius(20)
-                    }
-                    .padding(.bottom, 8)
-                }
+            } else {
+                // Fallback UI to prevent crash while transitioning
+                Color.clear
             }
         }
     }
 
     private func addItem() {
-        guard !newItemText.isEmpty else { return }
+        guard tripIndex < trips.count, !newItemText.isEmpty else { return }
         trips[tripIndex].checklist.append(CheckListItem(title: newItemText, isCompleted: false, category: selectedCategory))
         saveTrips(trips)
         newItemText = ""
     }
 
     private func deleteItems(at offsets: IndexSet) {
+        guard tripIndex < trips.count else { return }
         let toDelete = offsets.map { visibleIndices[$0] }
         trips[tripIndex].checklist.remove(atOffsets: IndexSet(toDelete))
         saveTrips(trips)
     }
-}
-
-#Preview {
-    @State var trips = [Trip(
-        name: "Sample Trip",
-        locationName: "Yosemite",
-        coordinate: .init(latitude: 37.8651, longitude: -119.5383),
-        startDate: Date(),
-        endDate: Date().addingTimeInterval(86400 * 5),
-        checklist: [
-            CheckListItem(title: "Book flights", isCompleted: false, category: "Travel Prep"),
-            CheckListItem(title: "Pack clothes", isCompleted: false, category: "Packing"),
-            CheckListItem(title: "Buy park pass", isCompleted: false, category: "At the Park")
-        ]
-    )]
-    return ChecklistView(trips: $trips, tripIndex: 0, selectedTripID: .constant(trips[0].id))
 }

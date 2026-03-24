@@ -102,17 +102,30 @@ struct Provider: TimelineProvider {
 
     private func makeEntry() -> WidgetTimelineEntry {
         let trips = loadTripsFromGroup()
-        let today = Calendar.current.startOfDay(for: Date())
+        let defaults = UserDefaults(suiteName: appGroupID) ?? .standard
+        
+        // 1. Try to find the trip the user explicitly selected in the app
+        let selectedIDString = defaults.string(forKey: "selectedTripID")
+        var displayTrip: TripEntry? = nil
+        
+        if let idString = selectedIDString, let uuid = UUID(uuidString: idString) {
+            displayTrip = trips.first(where: { $0.id == uuid })
+        }
+        
+        // 2. Fallback: If no selection exists, show the closest upcoming trip
+        if displayTrip == nil {
+            let today = Calendar.current.startOfDay(for: Date())
+            displayTrip = trips
+                .filter { $0.startDate >= today }
+                .sorted { $0.startDate < $1.startDate }
+                .first ?? trips.last
+        }
 
-        let nextTrip = trips
-            .filter { $0.startDate >= today }
-            .sorted { $0.startDate < $1.startDate }
-            .first ?? trips.sorted { $0.startDate < $1.startDate }.last
-
-        guard let trip = nextTrip else {
+        guard let trip = displayTrip else {
             return WidgetTimelineEntry(date: Date(), trip: nil, daysUntil: 0, checklistProgress: 0, completedCount: 0, totalCount: 0)
         }
 
+        // Existing calculation logic remains the same...
         let days = max(0, Calendar.current.dateComponents([.day], from: Date(), to: trip.startDate).day ?? 0)
         let completed = trip.checklist.filter { $0.isCompleted }.count
         let total = trip.checklist.count
@@ -146,7 +159,7 @@ struct TripCheckWidgetEntryView: View {
     // MARK: Small
     func smallView(trip: TripEntry) -> some View {
             VStack(alignment: .leading, spacing: 6) {
-                Text("NEXT TRIP")
+                Text("SELECTED TRIP")
                     .font(.system(size: 9, weight: .semibold))
                     .foregroundColor(.blue.opacity(0.8))
                     .tracking(1.5)
@@ -183,7 +196,7 @@ struct TripCheckWidgetEntryView: View {
             HStack(spacing: 16) {
                 // Left: trip info
                 VStack(alignment: .leading, spacing: 6) {
-                    Text("NEXT TRIP")
+                    Text("SELECTED TRIP")
                         .font(.system(size: 9, weight: .semibold))
                         .foregroundColor(.blue.opacity(0.8))
                         .tracking(1.5)

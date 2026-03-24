@@ -7,6 +7,7 @@
 
 import SwiftUI
 import UserNotifications
+import WidgetKit
 
 func scheduleTripNotification(for trip: Trip) {
     let center = UNUserNotificationCenter.current()
@@ -195,6 +196,19 @@ struct MainView: View {
                         print("Notification permission denied")
                     }
                 }
+            }
+            .onChange(of: selectedTrip) { newValue in
+                let groupID = "group.com.parkermorgan.tripcheck"
+                let defaults = UserDefaults(suiteName: groupID)
+                
+                if let id = newValue {
+                    defaults?.set(id.uuidString, forKey: "selectedTripID")
+                } else {
+                    defaults?.removeObject(forKey: "selectedTripID")
+                }
+                
+                // Refresh the widget immediately
+                WidgetCenter.shared.reloadAllTimelines()
             }
             .sheet(isPresented: $showHelper) {
                 HelperView(trips: $trips)
