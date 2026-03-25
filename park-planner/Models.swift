@@ -15,6 +15,7 @@ struct CheckListItem: Identifiable, Equatable, Codable {
     var title: String
     var isCompleted: Bool
     var category: String
+    var notificationsEnabled: Bool = false
 }
 
 let defaultChecklistItems: [CheckListItem] = [

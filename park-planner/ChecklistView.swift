@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import UserNotifications
 internal import _LocationEssentials
 
 
@@ -13,6 +14,7 @@ struct ChecklistRow: View {
     @Binding var item: CheckListItem
     let onToggle: () -> Void
     let onEdit: (String) -> Void
+    let onNotificationToggle: () -> Void
     @State private var isEditing = false
     @State private var editText = ""
     @Environment(\.colorScheme) var colorScheme
@@ -42,6 +44,17 @@ struct ChecklistRow: View {
                 Text(item.title)
                     .foregroundColor(.primary)
                 Spacer()
+
+                // 🔔 Notification toggle
+                Button {
+                    item.notificationsEnabled.toggle()
+                    onNotificationToggle()
+                } label: {
+                    Image(systemName: item.notificationsEnabled ? "bell.fill" : "bell.slash")
+                        .foregroundColor(item.notificationsEnabled ? .blue : .secondary)
+                }
+                .buttonStyle(.plain)
+
                 Button {
                     editText = item.title
                     isEditing = true
@@ -211,15 +224,12 @@ struct ChecklistView: View {
     }
 
     var visibleIndices: [Int] {
-        // SAFETY CHECK: Ensure the trip still exists before accessing checklist
         guard tripIndex < trips.count else { return [] }
-        
         return trips[tripIndex].checklist.indices.filter { trips[tripIndex].checklist[$0].category == selectedCategory }
     }
 
     var body: some View {
         ZStack {
-            // SAFETY CHECK: Wrap content in a count check
             if tripIndex < trips.count {
                 VStack(spacing: 12) {
                     Spacer().frame(height: 100)
@@ -303,6 +313,15 @@ struct ChecklistView: View {
                                 onEdit: { newTitle in
                                     trips[tripIndex].checklist[idx].title = newTitle
                                     saveTrips(trips)
+                                },
+                                onNotificationToggle: {
+                                    let item = trips[tripIndex].checklist[idx]
+                                    if item.notificationsEnabled {
+                                        scheduleNotification(for: item)
+                                    } else {
+                                        cancelNotification(for: item)
+                                    }
+                                    saveTrips(trips)
                                 }
                             )
                             .listRowBackground(Color.clear)
@@ -337,17 +356,61 @@ struct ChecklistView: View {
         }
     }
 
+    // MARK: - Item Management
+
     private func addItem() {
         guard tripIndex < trips.count, !newItemText.isEmpty else { return }
-        trips[tripIndex].checklist.append(CheckListItem(title: newItemText, isCompleted: false, category: selectedCategory))
+        let newItem = CheckListItem(
+            title: newItemText,
+            isCompleted: false,
+            category: selectedCategory,
+            notificationsEnabled: true  // default ON for new items
+        )
+        trips[tripIndex].checklist.append(newItem)
         saveTrips(trips)
+        scheduleNotification(for: newItem)
         newItemText = ""
     }
 
     private func deleteItems(at offsets: IndexSet) {
         guard tripIndex < trips.count else { return }
         let toDelete = offsets.map { visibleIndices[$0] }
+        // Cancel any pending notifications for deleted items
+        for idx in toDelete {
+            cancelNotification(for: trips[tripIndex].checklist[idx])
+        }
         trips[tripIndex].checklist.remove(atOffsets: IndexSet(toDelete))
         saveTrips(trips)
+    }
+
+    // MARK: - Notifications
+
+    private func scheduleNotification(for item: CheckListItem) {
+        guard item.notificationsEnabled else { return }
+
+        UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .sound]) { granted, _ in
+            guard granted else { return }
+
+            let content = UNMutableNotificationContent()
+            content.title = "Checklist Reminder"
+            content.body = "Don't forget: \(item.title)"
+            content.sound = .default
+
+            // 10-second delay for testing
+            let trigger = UNTimeIntervalNotificationTrigger(timeInterval: 10, repeats: false)
+            let request = UNNotificationRequest(
+                identifier: item.id.uuidString,
+                content: content,
+                trigger: trigger
+            )
+
+            UNUserNotificationCenter.current().add(request)
+        }
+    }
+
+    private func cancelNotification(for item: CheckListItem) {
+        UNUserNotificationCenter.current().removePendingNotificationRequests(
+            withIdentifiers: [item.id.uuidString]
+        )
     }
 }
