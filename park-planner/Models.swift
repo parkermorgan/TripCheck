@@ -16,6 +16,7 @@ struct CheckListItem: Identifiable, Equatable, Codable {
     var isCompleted: Bool
     var category: String
     var notificationsEnabled: Bool = false
+    var date: Date?
 }
 
 let defaultChecklistItems: [CheckListItem] = [
@@ -28,10 +29,6 @@ let defaultChecklistItems: [CheckListItem] = [
     CheckListItem(title: "Pack clothes", isCompleted: false, category: "Packing"),
     CheckListItem(title: "Pack toiletries", isCompleted: false, category: "Packing"),
     CheckListItem(title: "Pack chargers", isCompleted: false, category: "Packing"),
-
-    // At the Park
-    CheckListItem(title: "Download offline maps", isCompleted: false, category: "At the Park"),
-    CheckListItem(title: "Buy park pass", isCompleted: false, category: "At the Park"),
 ]
 
 struct Trip: Identifiable, Equatable, Codable {
@@ -42,6 +39,24 @@ struct Trip: Identifiable, Equatable, Codable {
     var startDate: Date
     var endDate: Date
     var checklist: [CheckListItem]
+    
+    var tripDates: [Date] {
+            var dates: [Date] = []
+            let calendar = Calendar.current
+            
+            guard let start = calendar.date(bySettingHour: 0, minute: 0, second: 0, of: startDate),
+                  let end = calendar.date(bySettingHour: 0, minute: 0, second: 0, of: endDate) else {
+                return []
+            }
+            
+            var currentDate = start
+            while currentDate <= end {
+                dates.append(currentDate)
+                guard let nextDate = calendar.date(byAdding: .day, value: 1, to: currentDate) else { break }
+                currentDate = nextDate
+            }
+            return dates
+        }
 
     static func == (lhs: Trip, rhs: Trip) -> Bool {
         lhs.id == rhs.id &&

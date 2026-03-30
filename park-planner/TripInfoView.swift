@@ -1,5 +1,6 @@
 import SwiftUI
 import CoreLocation
+import MapKit
 
 private let dateFormatter: DateFormatter = {
     let formatter = DateFormatter()
@@ -96,6 +97,12 @@ struct TripCard: View {
                 Text("No checklist items yet").font(.caption).foregroundColor(.secondary)
             }
 
+            // MARK: - Local Discovery Section (Visible only when selected)
+            if isSelected {
+                Divider()
+                PlaceDiscoveryView(coordinate: trip.coordinate)
+            }
+
             Divider()
 
             HStack(spacing: 0) {
@@ -130,6 +137,172 @@ struct TripCard: View {
     }
 }
 
+// MARK: - Place Discovery View
+struct PlaceDiscoveryView: View {
+    let coordinate: CLLocationCoordinate2D
+    
+    @State private var hotels: [MKMapItem] = []
+    @State private var restaurants: [MKMapItem] = []
+    
+    @State private var showHotels = false
+    @State private var showRestaurants = false
+    
+    @Environment(\.colorScheme) var colorScheme
+    
+    var buttonBackground: Color {
+        colorScheme == .dark ? Color(.systemGray5) : Color.white
+    }
+    
+    var body: some View {
+        VStack(spacing: 12) {
+            Text("Discover Nearby")
+                .font(.caption)
+                .foregroundColor(.secondary)
+                .frame(maxWidth: .infinity, alignment: .leading)
+            
+            HStack(spacing: 12) {
+                // Hotels Card
+                Button {
+                    withAnimation { showHotels.toggle() }
+                    if showHotels && hotels.isEmpty { fetchPlaces(query: "Hotels", isHotel: true) }
+                } label: {
+                    VStack(alignment: .leading, spacing: 6) {
+                        Label("Hotels", systemImage: "building.fade.fill")
+                            .font(.subheadline).fontWeight(.semibold)
+                            .foregroundColor(.blue)
+                        Text(showHotels ? "Hide list" : "Show top 5")
+                            .font(.caption2)
+                            .foregroundColor(.secondary)
+                    }
+                    .padding(12)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .background(buttonBackground)
+                    .cornerRadius(16)
+                    .shadow(color: .black.opacity(0.03), radius: 5)
+                }
+                .buttonStyle(.plain)
+                
+                // Restaurants Card
+                Button {
+                    withAnimation { showRestaurants.toggle() }
+                    if showRestaurants && restaurants.isEmpty { fetchPlaces(query: "Restaurants", isHotel: false) }
+                } label: {
+                    VStack(alignment: .leading, spacing: 6) {
+                        Label("Dining", systemImage: "fork.knife")
+                            .font(.subheadline).fontWeight(.semibold)
+                            .foregroundColor(.purple)
+                        Text(showRestaurants ? "Hide list" : "Show top 5")
+                            .font(.caption2)
+                            .foregroundColor(.secondary)
+                    }
+                    .padding(12)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .background(buttonBackground)
+                    .cornerRadius(16)
+                    .shadow(color: .black.opacity(0.03), radius: 5)
+                }
+                .buttonStyle(.plain)
+            }
+            
+            // Hotels List
+            if showHotels {
+                PlaceList(places: hotels, iconName: "bed.double.fill", iconColor: .blue)
+                    .transition(.opacity.combined(with: .move(edge: .top)))
+            }
+            
+            // Restaurants List
+            if showRestaurants {
+                PlaceList(places: restaurants, iconName: "fork.knife", iconColor: .purple)
+                    .transition(.opacity.combined(with: .move(edge: .top)))
+            }
+        }
+    }
+    
+    private func fetchPlaces(query: String, isHotel: Bool) {
+        let request = MKLocalSearch.Request()
+        request.naturalLanguageQuery = query
+        // Center the search on your trip's coordinates
+        request.region = MKCoordinateRegion(center: coordinate, span: MKCoordinateSpan(latitudeDelta: 0.1, longitudeDelta: 0.1))
+        
+        let search = MKLocalSearch(request: request)
+        search.start { response, _ in
+            guard let items = response?.mapItems else { return }
+            
+            DispatchQueue.main.async {
+                let limitedList = Array(items.prefix(5))
+                if isHotel {
+                    self.hotels = limitedList
+                } else {
+                    self.restaurants = limitedList
+                }
+            }
+        }
+    }
+}
+
+// MARK: - Reusable List for MapItems
+struct PlaceList: View {
+    let places: [MKMapItem]
+    let iconName: String
+    let iconColor: Color
+    
+    var body: some View {
+        VStack(alignment: .leading, spacing: 0) {
+            if places.isEmpty {
+                Text("Searching...")
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+                    .padding(.vertical, 12)
+                    .padding(.horizontal, 16)
+            } else {
+                ForEach(places, id: \.self) { item in
+                    Button {
+                        // This opens the location directly in Apple Maps
+                        item.openInMaps(launchOptions: [
+                            MKLaunchOptionsMapCenterKey: NSValue(mkCoordinate: item.placemark.coordinate)
+                        ])
+                    } label: {
+                        HStack(alignment: .center, spacing: 12) {
+                            Image(systemName: iconName)
+                                .font(.caption)
+                                .foregroundColor(iconColor)
+                                .frame(width: 20)
+                            
+                            VStack(alignment: .leading, spacing: 2) {
+                                Text(item.name ?? "Unknown Place")
+                                    .font(.caption).fontWeight(.semibold)
+                                    .foregroundColor(.primary)
+                                if let subTitle = item.placemark.title {
+                                    Text(subTitle)
+                                        .font(.system(size: 10))
+                                        .foregroundColor(.secondary)
+                                        .lineLimit(1)
+                                }
+                            }
+                            Spacer()
+                            
+                            Image(systemName: "arrow.up.right.circle.fill")
+                                .font(.caption)
+                                .foregroundColor(.secondary.opacity(0.6))
+                        }
+                        .padding(.vertical, 10)
+                        .padding(.horizontal, 12)
+                        .background(Color.primary.opacity(0.01)) // Makes the whole row tappable
+                    }
+                    .buttonStyle(.plain)
+                    
+                    if item != places.last {
+                        Divider()
+                            .padding(.leading, 44) // Aligns divider cleanly past the icon
+                    }
+                }
+            }
+        }
+        .background(Color.black.opacity(0.03))
+        .cornerRadius(12)
+    }
+}
+
 struct TripInfoView: View {
     @Binding var trips: [Trip]
     @Binding var selectedTrip: UUID?
@@ -150,7 +323,6 @@ struct TripInfoView: View {
             )
             .ignoresSafeArea()
 
-            // Banners
             VStack {
                 HStack {
                     Rectangle()
@@ -184,7 +356,6 @@ struct TripInfoView: View {
             .ignoresSafeArea()
             .allowsHitTesting(false)
 
-            // Content
             ScrollView(showsIndicators: false) {
                 VStack(spacing: 16) {
                     Spacer().frame(height: 100)
@@ -233,31 +404,4 @@ struct TripInfoView: View {
             }
         }
     }
-}
-
-#Preview {
-    TripInfoView(
-        trips: .constant([
-            Trip(
-                name: "Hawaii Trip",
-                locationName: "Honolulu",
-                coordinate: .init(latitude: 21.3069, longitude: -157.8583),
-                startDate: Date().addingTimeInterval(86400 * 10),
-                endDate: Date().addingTimeInterval(86400 * 15),
-                checklist: [
-                    CheckListItem(title: "Book flights", isCompleted: true, category: "Travel Prep"),
-                    CheckListItem(title: "Pack clothes", isCompleted: false, category: "Packing")
-                ]
-            ),
-            Trip(
-                name: "Seattle Visit",
-                locationName: "Seattle",
-                coordinate: .init(latitude: 47.6062, longitude: -122.3321),
-                startDate: Date().addingTimeInterval(86400 * 30),
-                endDate: Date().addingTimeInterval(86400 * 33),
-                checklist: []
-            )
-        ]),
-        selectedTrip: .constant(nil)
-    )
 }

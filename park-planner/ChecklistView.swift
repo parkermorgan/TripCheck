@@ -1,14 +1,6 @@
-//
-//  ChecklistView.swift
-//  park-planner
-//
-//  Created by Parker Morgan on 1/14/26.
-//
-
 import SwiftUI
 import UserNotifications
 internal import _LocationEssentials
-
 
 struct ChecklistRow: View {
     @Binding var item: CheckListItem
@@ -17,6 +9,8 @@ struct ChecklistRow: View {
     let onNotificationToggle: () -> Void
     @State private var isEditing = false
     @State private var editText = ""
+    
+    @FocusState private var isTextFieldFocused: Bool
     @Environment(\.colorScheme) var colorScheme
 
     var rowBackground: Color {
@@ -40,12 +34,13 @@ struct ChecklistRow: View {
                     isEditing = false
                 })
                 .textFieldStyle(.plain)
+                .focused($isTextFieldFocused)
             } else {
                 Text(item.title)
                     .foregroundColor(.primary)
+                
                 Spacer()
 
-                // 🔔 Notification toggle
                 Button {
                     item.notificationsEnabled.toggle()
                     onNotificationToggle()
@@ -58,6 +53,10 @@ struct ChecklistRow: View {
                 Button {
                     editText = item.title
                     isEditing = true
+                    // Trigger keyboard focus after a small delay to ensure the UI builds the TextField first
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                        isTextFieldFocused = true
+                    }
                 } label: {
                     Image(systemName: "pencil")
                         .foregroundColor(.secondary)
@@ -68,6 +67,7 @@ struct ChecklistRow: View {
         .padding()
         .background(rowBackground)
         .cornerRadius(30)
+        .contentShape(.dragPreview, RoundedRectangle(cornerRadius: 30))
     }
 }
 
@@ -82,7 +82,6 @@ struct TripChecklistTab: View {
 
     var body: some View {
         ZStack {
-            // Background
             LinearGradient(
                 colors: [Color.blue.opacity(0.3), Color.purple.opacity(0.3)],
                 startPoint: .topLeading,
@@ -90,7 +89,6 @@ struct TripChecklistTab: View {
             )
             .ignoresSafeArea()
 
-            // Top banner
             VStack {
                 HStack {
                     Rectangle()
@@ -112,7 +110,6 @@ struct TripChecklistTab: View {
             .ignoresSafeArea()
             .allowsHitTesting(false)
 
-            // Bottom banner
             VStack {
                 Spacer()
                 HStack {
@@ -128,11 +125,9 @@ struct TripChecklistTab: View {
             }
             .ignoresSafeArea()
             .allowsHitTesting(false)
-
-            // Main content
+            
             if let id = selectedTripID,
-               let index = trips.firstIndex(where: { $0.id == id }),
-               index < trips.count {
+               let index = trips.firstIndex(where: { $0.id == id }) {
                 ChecklistView(trips: $trips, tripIndex: index, selectedTripID: $selectedTripID)
                     .id(id)
             } else {
@@ -193,20 +188,27 @@ struct TripChecklistTab: View {
             }
         }
         .onAppear {
-            if let lastTrip = trips.last {
-                selectedTripID = lastTrip.id
+            if selectedTripID == nil || !trips.contains(where: { $0.id == selectedTripID }) {
+                selectedTripID = trips.last?.id
             }
         }
-        .onChange(of: trips) { updatedTrips in
+        .onChange(of: trips) { _, updatedTrips in
             if updatedTrips.isEmpty {
                 selectedTripID = nil
             } else if let id = selectedTripID, !updatedTrips.contains(where: { $0.id == id }) {
-                selectedTripID = updatedTrips.first?.id
+                selectedTripID = updatedTrips.last?.id
             }
         }
     }
+    
+    // Moved inside the struct to fix scope and extraneous bracket errors
+    private func loadTrips() {
+        guard let data = UserDefaults.standard.data(forKey: "savedTrips") else { return }
+        if let decodedTrips = try? JSONDecoder().decode([Trip].self, from: data) {
+            trips = decodedTrips
+        }
+    }
 }
-
 
 struct ChecklistView: View {
     @Binding var trips: [Trip]
@@ -215,26 +217,45 @@ struct ChecklistView: View {
 
     @State private var newItemText = ""
     @State private var selectedCategory = "Travel Prep"
+    @State private var selectedDate: Date? = nil
     @Environment(\.colorScheme) var colorScheme
 
-    let categories = ["Travel Prep", "Packing", "At the Park"]
+    let categories = ["Travel Prep", "Packing", "Daily Schedule"]
 
     var inputBackground: Color {
         colorScheme == .dark ? Color(.systemGray6) : Color.white
     }
 
-    var visibleIndices: [Int] {
+    var visibleItems: [CheckListItem] {
         guard tripIndex < trips.count else { return [] }
-        return trips[tripIndex].checklist.indices.filter { trips[tripIndex].checklist[$0].category == selectedCategory }
+        return trips[tripIndex].checklist.filter { item in
+            if selectedCategory == "Daily Schedule" {
+                guard let selectedDate = selectedDate, let itemDate = item.date else { return false }
+                return Calendar.current.isDate(itemDate, inSameDayAs: selectedDate)
+            } else {
+                return item.category == selectedCategory
+            }
+        }
     }
+    
+    private let dayFormatter: DateFormatter = {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "d"
+        return formatter
+    }()
+    
+    private let monthFormatter: DateFormatter = {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "MMM"
+        return formatter
+    }()
 
     var body: some View {
         ZStack {
             if tripIndex < trips.count {
-                VStack(spacing: 12) {
+                VStack(spacing: 16) {
                     Spacer().frame(height: 100)
 
-                    // Trip pill selector
                     ScrollView(.horizontal, showsIndicators: false) {
                         HStack(spacing: 12) {
                             ForEach(trips) { trip in
@@ -271,12 +292,68 @@ struct ChecklistView: View {
                         .padding(.vertical, 4)
                     }
 
-                    // Category picker
                     Picker("Category", selection: $selectedCategory) {
                         ForEach(categories, id: \.self) { Text($0) }
                     }
                     .pickerStyle(.segmented)
                     .padding(.horizontal, 16)
+                    .onChange(of: selectedCategory) { _, newValue in
+                        if newValue == "Daily Schedule" && selectedDate == nil {
+                            selectedDate = trips[tripIndex].tripDates.first
+                        }
+                    }
+                    
+                    if selectedCategory == "Daily Schedule" {
+                        ScrollView(.horizontal, showsIndicators: false) {
+                            HStack(spacing: 12) {
+                                let dates = trips[tripIndex].tripDates
+                                ForEach(0..<dates.count, id: \.self) { index in
+                                    let date = dates[index]
+                                    let isSelected = selectedDate.map { Calendar.current.isDate(date, inSameDayAs: $0) } ?? false
+                                    
+                                    VStack(spacing: 4) {
+                                        Text("Day \(index + 1)")
+                                            .font(.caption2)
+                                            .fontWeight(.bold)
+                                            .foregroundColor(isSelected ? .white : .secondary)
+                                        
+                                        Text(dayFormatter.string(from: date))
+                                            .font(.title3)
+                                            .fontWeight(.bold)
+                                            .foregroundColor(isSelected ? .white : .primary)
+                                        
+                                        Text(monthFormatter.string(from: date).uppercased())
+                                            .font(.caption2)
+                                            .fontWeight(.semibold)
+                                            .foregroundColor(isSelected ? .white.opacity(0.8) : .secondary)
+                                    }
+                                    .frame(width: 65, height: 75)
+                                    .background(
+                                        ZStack {
+                                            if isSelected {
+                                                RoundedRectangle(cornerRadius: 16)
+                                                    .fill(LinearGradient(
+                                                        colors: [Color.blue, Color.purple.opacity(0.8)],
+                                                        startPoint: .topLeading,
+                                                        endPoint: .bottomTrailing
+                                                    ))
+                                            } else {
+                                                RoundedRectangle(cornerRadius: 16)
+                                                    .fill(inputBackground)
+                                                RoundedRectangle(cornerRadius: 16)
+                                                    .strokeBorder(Color.gray.opacity(0.2), lineWidth: 1)
+                                            }
+                                        }
+                                    )
+                                    .onTapGesture {
+                                        selectedDate = date
+                                    }
+                                }
+                            }
+                            .padding(.horizontal, 16)
+                            .padding(.vertical, 4)
+                        }
+                    }
 
                     HStack(spacing: 12) {
                         HStack {
@@ -303,39 +380,49 @@ struct ChecklistView: View {
                     .padding(.horizontal, 30)
 
                     List {
-                        ForEach(visibleIndices, id: \.self) { idx in
-                            ChecklistRow(
-                                item: $trips[tripIndex].checklist[idx],
-                                onToggle: {
-                                    trips[tripIndex].checklist[idx].isCompleted.toggle()
-                                    saveTrips(trips)
-                                },
-                                onEdit: { newTitle in
-                                    trips[tripIndex].checklist[idx].title = newTitle
-                                    saveTrips(trips)
-                                },
-                                onNotificationToggle: {
-                                    let item = trips[tripIndex].checklist[idx]
-                                    if item.notificationsEnabled {
-                                        scheduleNotification(for: item)
-                                    } else {
-                                        cancelNotification(for: item)
+                        ForEach(visibleItems) { item in
+                            if let idx = trips[tripIndex].checklist.firstIndex(where: { $0.id == item.id }) {
+                                ChecklistRow(
+                                    item: $trips[tripIndex].checklist[idx],
+                                    onToggle: {
+                                        trips[tripIndex].checklist[idx].isCompleted.toggle()
+                                        saveTrips(trips)
+                                    },
+                                    onEdit: { newTitle in
+                                        trips[tripIndex].checklist[idx].title = newTitle
+                                        saveTrips(trips)
+                                    },
+                                    onNotificationToggle: {
+                                        let updatedItem = trips[tripIndex].checklist[idx]
+                                        if updatedItem.notificationsEnabled {
+                                            scheduleNotification(for: updatedItem)
+                                        } else {
+                                            cancelNotification(for: updatedItem)
+                                        }
+                                        saveTrips(trips)
                                     }
-                                    saveTrips(trips)
-                                }
-                            )
-                            .listRowBackground(Color.clear)
+                                )
+                                .listRowBackground(Color.clear)
+                            }
                         }
                         .onDelete(perform: deleteItems)
+                        .onMove(perform: moveItems)
                     }
                     .listStyle(.plain)
                     .scrollContentBackground(.hidden)
                     .background(Color.clear)
                     .padding(.horizontal, 16)
 
-                    if !visibleIndices.isEmpty {
+                    if !visibleItems.isEmpty {
                         Button(role: .destructive) {
-                            trips[tripIndex].checklist.removeAll { $0.category == selectedCategory }
+                            trips[tripIndex].checklist.removeAll { item in
+                                if selectedCategory == "Daily Schedule" {
+                                    guard let selectedDate = selectedDate, let itemDate = item.date else { return false }
+                                    return Calendar.current.isDate(itemDate, inSameDayAs: selectedDate)
+                                } else {
+                                    return item.category == selectedCategory
+                                }
+                            }
                             saveTrips(trips)
                         } label: {
                             Text("Clear All")
@@ -350,13 +437,15 @@ struct ChecklistView: View {
                     }
                 }
             } else {
-                // Fallback UI to prevent crash while transitioning
                 Color.clear
             }
         }
+        .onAppear {
+            if selectedCategory == "Daily Schedule" && selectedDate == nil {
+                selectedDate = trips[tripIndex].tripDates.first
+            }
+        }
     }
-
-    // MARK: - Item Management
 
     private func addItem() {
         guard tripIndex < trips.count, !newItemText.isEmpty else { return }
@@ -364,26 +453,28 @@ struct ChecklistView: View {
             title: newItemText,
             isCompleted: false,
             category: selectedCategory,
-            notificationsEnabled: true  // default ON for new items
+            notificationsEnabled: false,
+            date: selectedCategory == "Daily Schedule" ? selectedDate : nil
         )
         trips[tripIndex].checklist.append(newItem)
         saveTrips(trips)
-        scheduleNotification(for: newItem)
         newItemText = ""
     }
 
     private func deleteItems(at offsets: IndexSet) {
         guard tripIndex < trips.count else { return }
-        let toDelete = offsets.map { visibleIndices[$0] }
-        // Cancel any pending notifications for deleted items
-        for idx in toDelete {
-            cancelNotification(for: trips[tripIndex].checklist[idx])
+        
+        for offset in offsets {
+            let itemToDelete = visibleItems[offset]
+            cancelNotification(for: itemToDelete)
+            
+            if let actualIndex = trips[tripIndex].checklist.firstIndex(where: { $0.id == itemToDelete.id }) {
+                trips[tripIndex].checklist.remove(at: actualIndex)
+            }
         }
-        trips[tripIndex].checklist.remove(atOffsets: IndexSet(toDelete))
+        
         saveTrips(trips)
     }
-
-    // MARK: - Notifications
 
     private func scheduleNotification(for item: CheckListItem) {
         guard item.notificationsEnabled else { return }
@@ -393,24 +484,80 @@ struct ChecklistView: View {
 
             let content = UNMutableNotificationContent()
             content.title = "Checklist Reminder"
-            content.body = "Don't forget: \(item.title)"
             content.sound = .default
 
-            // 10-second delay for testing
-            let trigger = UNTimeIntervalNotificationTrigger(timeInterval: 10, repeats: false)
+            var trigger: UNNotificationTrigger
+            
+            if let itemDate = item.date, let dayBefore = Calendar.current.date(byAdding: .day, value: -1, to: itemDate) {
+                
+                content.body = "Tomorrow is scheduled: \(item.title)"
+                
+                let components = Calendar.current.dateComponents([.year, .month, .day, .hour, .minute], from: dayBefore)
+                
+                var scheduledComponents = components
+                scheduledComponents.hour = 9
+                scheduledComponents.minute = 0
+                
+                trigger = UNCalendarNotificationTrigger(dateMatching: scheduledComponents, repeats: false)
+            } else {
+                content.body = "Don't forget: \(item.title)"
+                trigger = UNTimeIntervalNotificationTrigger(timeInterval: 10, repeats: false)
+            }
+
             let request = UNNotificationRequest(
                 identifier: item.id.uuidString,
                 content: content,
                 trigger: trigger
             )
 
-            UNUserNotificationCenter.current().add(request)
+            UNUserNotificationCenter.current().add(request) { error in
+                if let error = error {
+                    print("Error scheduling notification: \(error.localizedDescription)")
+                } else {
+                    print("Notification successfully scheduled!")
+                }
+            }
         }
+    }
+    
+    private func moveItems(from source: IndexSet, to destination: Int) {
+        guard tripIndex < trips.count else { return }
+        
+        let movingItemsIDs = source.map { visibleItems[$0].id }
+        
+        let masterIndices = movingItemsIDs.compactMap { id in
+            trips[tripIndex].checklist.firstIndex(where: { $0.id == id })
+        }
+        
+        let masterDestination: Int
+        if destination < visibleItems.count {
+            let destID = visibleItems[destination].id
+            masterDestination = trips[tripIndex].checklist.firstIndex(where: { $0.id == destID }) ?? destination
+        } else {
+            if let lastVisibleID = visibleItems.last?.id,
+               let lastMasterIdx = trips[tripIndex].checklist.firstIndex(where: { $0.id == lastVisibleID }) {
+                masterDestination = lastMasterIdx + 1
+            } else {
+                masterDestination = trips[tripIndex].checklist.count
+            }
+        }
+        
+        trips[tripIndex].checklist.move(fromOffsets: IndexSet(masterIndices), toOffset: masterDestination)
+        
+        saveTrips(trips)
     }
 
     private func cancelNotification(for item: CheckListItem) {
         UNUserNotificationCenter.current().removePendingNotificationRequests(
             withIdentifiers: [item.id.uuidString]
         )
+    }
+    
+    private func saveTrips(_ updatedTrips: [Trip]) {
+        guard tripIndex < updatedTrips.count else { return }
+        
+        if let encoded = try? JSONEncoder().encode(updatedTrips) {
+            UserDefaults.standard.set(encoded, forKey: "savedTrips")
+        }
     }
 }
