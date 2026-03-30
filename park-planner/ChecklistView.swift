@@ -1,3 +1,10 @@
+//
+//  ChecklistView.swift
+//  park-planner
+//
+//  Created by Parker Morgan on 1/14/26.
+//
+
 import SwiftUI
 import UserNotifications
 internal import _LocationEssentials
